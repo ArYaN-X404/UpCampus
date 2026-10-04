@@ -5,14 +5,12 @@ import { useUpCampus } from '@/lib/store';
 import { PostKind } from '@/lib/types';
 import { 
   X, 
-  PenTool, 
   Wrench, 
   Lightbulb, 
   Bot, 
   ArrowUp, 
   Sparkles, 
   Loader2, 
-  UploadCloud, 
   MapPin, 
   Shield, 
   Flame, 
@@ -22,7 +20,8 @@ import {
   Zap, 
   Check, 
   CheckCheck,
-  Image as ImageIcon
+  Camera,
+  Trash2
 } from 'lucide-react';
 
 interface NewPostModalProps {
@@ -62,7 +61,6 @@ export default function NewPostModal({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [triageData, setTriageData] = useState<TriageData | null>(null);
   const [isApplied, setIsApplied] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,7 +71,7 @@ export default function NewPostModal({
     }
   }, [isOpen, defaultType]);
 
-  // Duplicate checker
+  // Debounced duplicate ticket search
   useEffect(() => {
     if (!title.trim() || title.length < 5) {
       setMatchedPost(null);
@@ -178,16 +176,6 @@ export default function NewPostModal({
     }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) {
-      const objectUrl = URL.createObjectURL(file);
-      processImageTriage(objectUrl);
-    }
-  };
-
   const isComplaint = kind === 'grievance';
   const isFormValid = title.trim().length >= 3 && location.trim().length >= 2;
 
@@ -231,121 +219,129 @@ export default function NewPostModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-[#070D1E]/90 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      {/* High-Contrast Unified Surface Card */}
-      <div className="relative my-auto w-full max-w-5xl max-h-[calc(100dvh-40px)] flex flex-col rounded-2xl bg-[#0D1527] border border-slate-700/80 shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden text-slate-100">
+    <div className="fixed inset-0 bg-[#060D1E]/90 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+      {/* UNIFIED MODAL CANVAS (No Box-in-Box Fragmentation) */}
+      <div className="relative my-auto w-full max-w-5xl max-h-[calc(100dvh-40px)] flex flex-col rounded-2xl bg-[#0B1326] border border-slate-700/80 shadow-[0_24px_80px_rgba(0,0,0,0.85)] overflow-hidden text-slate-100">
         
-        {/* Top Header */}
-        <div className="px-6 py-4 border-b border-slate-800 bg-[#101A30] flex items-center justify-between shrink-0">
-          <div>
-            <h2 className="text-xl font-bold text-white tracking-tight">
-              Create Campus Ticket
-            </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Submit an issue or amenity proposal for verified student voting and administration action.
-            </p>
+        {/* Unified Top Navigation & Mode Switcher Bar */}
+        <div className="px-6 py-3.5 border-b border-slate-800 bg-[#0E1830] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-6">
+            <span className="text-base font-bold text-white tracking-tight">
+              New Ticket
+            </span>
+
+            {/* Seamless Segmented Category Switcher (Integrated into header) */}
+            <div className="flex items-center bg-[#070D1E] border border-slate-700/70 rounded-lg p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setKind('grievance')}
+                className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all ${
+                  isComplaint
+                    ? 'bg-amber-500/20 text-amber-300 font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Wrench className="w-3.5 h-3.5" />
+                <span>Broken (Fix It)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setKind('suggestion')}
+                className={`px-3 py-1.5 rounded-md flex items-center gap-1.5 transition-all ${
+                  !isComplaint
+                    ? 'bg-emerald-500/20 text-emerald-300 font-bold shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span>Needs (Add It)</span>
+              </button>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+            className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
             aria-label="Close modal"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Unified 2-Column Grid */}
+        {/* 2-Column Split: Seamless Document Form on Left, Single Live Preview on Right */}
         <div className="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-slate-800">
           
-          {/* LEFT COLUMN: Clean Form Stream (7 Cols) */}
-          <div className="lg:col-span-7 p-6 space-y-6">
-            <form id="unified-post-form" onSubmit={(e) => { e.preventDefault(); executeSubmit(); }} className="space-y-5">
+          {/* LEFT COLUMN: The Unified Document Canvas (7 Cols) */}
+          <div className="lg:col-span-7 p-6 sm:p-7 space-y-6">
+            <form id="unified-post-form" onSubmit={(e) => { e.preventDefault(); executeSubmit(); }} className="space-y-6">
               
-              {/* 1. Unified Segmented Type Switcher */}
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                  Category
-                </label>
-                <div className="grid grid-cols-2 p-1 bg-[#142038] border border-slate-700/80 rounded-xl gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setKind('grievance')}
-                    className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                      isComplaint
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Wrench className="w-3.5 h-3.5" />
-                    <span>Broken (Fix It)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setKind('suggestion')}
-                    className={`py-2.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 ${
-                      !isComplaint
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    <Lightbulb className="w-3.5 h-3.5" />
-                    <span>Needs (Add It)</span>
-                  </button>
-                </div>
+              {/* Document Title (Large, Prominent, Seamless) */}
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  required
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Give this issue or idea a title..."
+                  className="w-full text-lg sm:text-xl font-bold bg-transparent border-0 text-white placeholder-slate-500 focus:outline-none focus:ring-0 p-0 leading-tight"
+                />
+                <div className="h-[1px] bg-slate-800 focus-within:bg-sky-400 transition-colors" />
               </div>
 
-              {/* 2. Core Inputs (Title & Location) */}
-              <div className="space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-slate-300">
-                      Title <span className="text-amber-400">*</span>
-                    </label>
-                    {hasTitle && (
-                      <span className="text-emerald-400 text-xs flex items-center gap-1 font-medium">
-                        <Check className="w-3 h-3" /> Valid
-                      </span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <PenTool className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      required
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="e.g., Street lights fused on Girls Hostel pathway"
-                      className="w-full h-11 text-sm bg-[#121B30] border border-slate-700 rounded-xl pl-10 pr-3 text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 font-medium"
-                    />
-                  </div>
+              {/* Integrated Attributes & Metadata Bar (Linear style) */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 pb-1 border-b border-slate-800/80">
+                {/* Location Input with MapPin */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0F1B36] border border-slate-700/70 rounded-lg text-xs">
+                  <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                  <input
+                    type="text"
+                    required
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Campus Location (e.g. North Hostel 3)..."
+                    className="bg-transparent border-0 text-white placeholder-slate-500 focus:outline-none focus:ring-0 p-0 text-xs w-52 sm:w-60"
+                  />
+                  {hasLocation && <Check className="w-3 h-3 text-emerald-400" />}
                 </div>
 
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold text-slate-300">
-                      Campus Location <span className="text-amber-400">*</span>
-                    </label>
-                    {hasLocation && (
-                      <span className="text-emerald-400 text-xs flex items-center gap-1 font-medium">
-                        <Check className="w-3 h-3" /> Valid
-                      </span>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      required
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="e.g., North Campus Pathway near Block 3"
-                      className="w-full h-11 text-sm bg-[#121B30] border border-slate-700 rounded-xl pl-10 pr-3 text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 font-medium"
-                    />
-                  </div>
+                {/* Urgency Selector Pill */}
+                <div className="flex items-center bg-[#0F1B36] border border-slate-700/70 rounded-lg p-0.5 text-xs">
+                  <span className="text-[11px] text-slate-400 pl-2 pr-1 font-medium">Urgency:</span>
+                  {(['low', 'medium', 'urgent'] as const).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setUrgency(level)}
+                      className={`px-2 py-1 rounded text-[11px] font-bold capitalize transition-colors ${
+                        urgency === level
+                          ? level === 'urgent'
+                            ? 'bg-red-500/25 text-red-300'
+                            : level === 'medium'
+                            ? 'bg-amber-500/25 text-amber-300'
+                            : 'bg-slate-700 text-white'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      {level}
+                    </button>
+                  ))}
                 </div>
+
+                {/* Anonymity Switch */}
+                <button
+                  type="button"
+                  onClick={() => setAnonymous(!anonymous)}
+                  className={`px-2.5 py-1.5 rounded-lg border text-xs flex items-center gap-1.5 transition-colors ${
+                    anonymous
+                      ? 'bg-purple-950/40 border-purple-500/50 text-purple-200'
+                      : 'bg-[#0F1B36] border-slate-700/70 text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Shield className="w-3.5 h-3.5 text-purple-400" />
+                  <span className="text-[11px] font-medium">{anonymous ? 'Anonymous' : 'Public Profile'}</span>
+                </button>
               </div>
 
               {/* Duplicate Alert if detected */}
@@ -374,167 +370,110 @@ export default function NewPostModal({
                 </div>
               )}
 
-              {/* 3. Detailed Context */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-slate-300">
-                    Description & Context <span className="text-slate-500 text-xs font-normal">(Optional)</span>
-                  </label>
-                  <span className="text-xs text-slate-400 tabular-nums">
-                    {description.length}/300
-                  </span>
+              {/* Natural Document Description Editor */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
+                  <span>Detailed context or suggestions</span>
+                  <span className="tabular-nums">{description.length}/300</span>
                 </div>
                 <textarea
-                  rows={3}
+                  rows={4}
                   maxLength={300}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Explain why this needs to be fixed or how it benefits students..."
-                  className="w-full text-sm bg-[#121B30] border border-slate-700 rounded-xl p-3 text-white placeholder-slate-500 focus:outline-none focus:border-sky-400 focus:ring-1 focus:ring-sky-400 font-medium resize-none"
+                  placeholder="Explain what is broken or needed, why it matters to campus students, and any relevant details..."
+                  className="w-full text-sm bg-transparent border-0 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-0 p-0 resize-none leading-relaxed min-h-[100px]"
                 />
+                <div className="h-[1px] bg-slate-800" />
               </div>
 
-              {/* 4. Unified Settings & Evidence Container */}
-              <div className="bg-[#101A30] border border-slate-800 rounded-xl p-4 space-y-4">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
-                  Settings & Verification Evidence
-                </span>
+              {/* Integrated Media & Evidence Toolbar */}
+              <div className="space-y-2.5 pt-2">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
 
-                {/* Photo Dropzone + Quick Test Samples */}
-                <div className="space-y-2">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-
-                  <div
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Photo Attachment CTA */}
+                  <button
+                    type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                    onDragLeave={() => setIsDragging(false)}
-                    onDrop={handleDrop}
-                    className={`cursor-pointer rounded-xl border border-dashed p-3 text-center transition-all flex items-center justify-center gap-3 ${
-                      isDragging
-                        ? 'border-sky-400 bg-sky-500/10'
-                        : photoUrl
-                        ? 'border-emerald-500/60 bg-emerald-500/5'
-                        : 'border-slate-700 hover:border-slate-500 bg-[#142038]'
-                    }`}
+                    className="px-3.5 py-2 rounded-lg bg-[#0F1B36] border border-slate-700/80 hover:border-slate-500 text-xs font-semibold text-white flex items-center gap-2 transition-colors"
                   >
-                    <UploadCloud className="w-5 h-5 text-sky-400 shrink-0" />
-                    <div className="text-left text-xs">
-                      <span className="font-semibold text-white">
-                        {photoUrl ? 'Photo attached (click to change)' : 'Upload photo evidence'}
-                      </span>
-                      <span className="text-slate-400 block text-[11px]">
-                        AI automatically scans visual landmarks & tags department
-                      </span>
-                    </div>
-                  </div>
+                    <Camera className="w-4 h-4 text-sky-400" />
+                    <span>{photoUrl ? 'Change Photo Evidence' : 'Attach Photo Evidence'}</span>
+                  </button>
 
-                  {/* Sample Chips */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <span className="text-[11px] text-slate-400 font-medium">Test sample:</span>
+                  {/* AI Quick Samples */}
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="text-slate-500 text-[11px]">AI demo samples:</span>
                     {[
-                      { label: 'Library Vending', url: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80' },
-                      { label: 'Hostel Pathway', url: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=600&q=80' },
+                      { label: 'Streetlight', url: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=600&q=80' },
                       { label: 'Washroom Tap', url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80' },
+                      { label: 'Vending', url: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80' },
                     ].map((s, idx) => (
                       <button
                         key={idx}
                         type="button"
                         onClick={() => processImageTriage(s.url)}
-                        className={`text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 transition-colors ${
+                        className={`px-2 py-1 rounded text-[11px] border transition-colors ${
                           photoUrl === s.url
-                            ? 'bg-sky-500/20 text-sky-300 border-sky-400/50 font-bold'
-                            : 'bg-slate-800 text-slate-300 border-slate-700 hover:text-white hover:bg-slate-700'
+                            ? 'bg-sky-500/20 text-sky-300 border-sky-400 font-bold'
+                            : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-white'
                         }`}
                       >
-                        <ImageIcon className="w-3 h-3 text-slate-400" />
-                        <span>{s.label}</span>
+                        {s.label}
                       </button>
                     ))}
                   </div>
-                </div>
 
-                {/* Urgency & Privacy Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-800">
-                  {/* Urgency Level */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      Urgency Level
-                    </label>
-                    <div className="grid grid-cols-3 gap-1 bg-[#142038] border border-slate-700 p-1 rounded-lg">
-                      {[
-                        { id: 'low', label: 'Low', activeClass: 'bg-slate-700 text-white' },
-                        { id: 'medium', label: 'Medium', activeClass: 'bg-amber-500/20 text-amber-300 border border-amber-500/40' },
-                        { id: 'urgent', label: 'Urgent', activeClass: 'bg-red-500/20 text-red-300 border border-red-500/40' },
-                      ].map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setUrgency(item.id as 'low' | 'medium' | 'urgent')}
-                          className={`py-1 rounded text-xs font-bold text-center transition-all ${
-                            urgency === item.id
-                              ? item.activeClass
-                              : 'text-slate-400 hover:text-slate-200'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Privacy Setting */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                      Privacy
-                    </label>
+                  {photoUrl && (
                     <button
                       type="button"
-                      role="switch"
-                      aria-checked={anonymous}
-                      onClick={() => setAnonymous(!anonymous)}
-                      className={`w-full py-1.5 px-3 rounded-lg border flex items-center justify-between text-xs transition-colors ${
-                        anonymous
-                          ? 'bg-slate-800 border-slate-600 text-white'
-                          : 'bg-[#142038] border-slate-700 text-slate-400 hover:text-slate-200'
-                      }`}
+                      onClick={() => { setPhotoUrl(''); setTriageData(null); }}
+                      className="text-xs text-rose-400 hover:text-rose-300 flex items-center gap-1 ml-auto"
+                      title="Remove Photo"
                     >
-                      <span className="flex items-center gap-1.5 font-medium">
-                        <Shield className="w-3.5 h-3.5" />
-                        <span>Post Anonymously</span>
-                      </span>
-                      <span className={`w-3.5 h-3.5 rounded-full ${anonymous ? 'bg-sky-400' : 'bg-slate-600'}`} />
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
                     </button>
-                  </div>
+                  )}
                 </div>
 
+                {/* AI Analyzing Shimmer Alert */}
+                {isAnalyzing && (
+                  <div className="p-2.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-xs text-sky-300 flex items-center gap-2 animate-pulse">
+                    <Loader2 className="w-4 h-4 animate-spin text-sky-400 shrink-0" />
+                    <span>AI vision scanning photo for campus landmarks & department routing...</span>
+                  </div>
+                )}
               </div>
+
             </form>
           </div>
 
-          {/* RIGHT COLUMN: Real-Time Preview & AI Intelligence (5 Cols) */}
-          <div className="lg:col-span-5 p-6 bg-[#0B1222] space-y-5 flex flex-col justify-start">
-            
-            {/* Live Feed Preview */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Live Preview
-                </span>
-                <span className="text-[11px] text-slate-500">Feed Card Output</span>
-              </div>
+          {/* RIGHT COLUMN: The Single Unified Ticket & Telemetry Card (5 Cols) */}
+          <div className="lg:col-span-5 p-6 bg-[#091020] space-y-4 flex flex-col justify-start">
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                Live Ticket Output
+              </span>
+              <span className="text-[11px] text-slate-500">Real-Time Sync</span>
+            </div>
 
-              {/* Realistic Feed Card Representation */}
-              <div className="bg-[#121B30] border border-slate-700/80 rounded-xl p-4 space-y-3 shadow-md">
+            {/* ONE SINGLE, UNIFIED TICKET CARD (Preview + Live Telemetry combined) */}
+            <div className="bg-[#0F1A34] border border-slate-700/80 rounded-xl overflow-hidden shadow-lg">
+              
+              {/* Ticket Preview Header */}
+              <div className="p-4 space-y-3">
                 <div className="flex items-start gap-3">
-                  {/* Simulated Vote Column */}
-                  <div className="w-9 bg-[#0B1222] border border-slate-700 rounded-lg p-1 flex flex-col items-center justify-center shrink-0 text-slate-400">
+                  {/* Vote Rail */}
+                  <div className="w-9 bg-[#070D1E] border border-slate-700/80 rounded-lg p-1 flex flex-col items-center justify-center shrink-0 text-slate-400">
                     <ChevronUp className="w-3.5 h-3.5 text-sky-400" />
                     <span className="text-xs font-bold text-white py-0.5">1</span>
                     <ChevronDown className="w-3.5 h-3.5" />
@@ -547,8 +486,8 @@ export default function NewPostModal({
                       }`}>
                         {isComplaint ? 'Fix It' : 'Add It'}
                       </span>
-                      <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded truncate max-w-[140px]">
-                        {location.trim() || 'Campus Grounds'}
+                      <span className="text-[10px] text-slate-400 bg-slate-800/90 px-2 py-0.5 rounded truncate max-w-[130px]">
+                        {location.trim() || 'Campus Location'}
                       </span>
                       {urgency === 'urgent' && (
                         <span className="text-[10px] font-bold text-red-300 bg-red-500/20 px-1.5 py-0.5 rounded">
@@ -560,7 +499,7 @@ export default function NewPostModal({
                     <h4 className={`text-sm leading-snug line-clamp-2 ${
                       title.trim() ? 'font-bold text-white' : 'text-slate-500 italic'
                     }`}>
-                      {title.trim() || 'Your ticket title will appear here...'}
+                      {title.trim() || 'Ticket title will appear here...'}
                     </h4>
                   </div>
                 </div>
@@ -568,7 +507,7 @@ export default function NewPostModal({
                 <p className={`text-xs leading-relaxed line-clamp-2 ${
                   description.trim() ? 'text-slate-300' : 'text-slate-500 italic'
                 }`}>
-                  {description.trim() || 'Description preview will be visible to students and administration.'}
+                  {description.trim() || 'Context notes will appear here once typed.'}
                 </p>
 
                 {photoUrl && (
@@ -577,7 +516,7 @@ export default function NewPostModal({
                   </div>
                 )}
 
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
+                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-400">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3 text-slate-500" />
                     <span>Just now</span>
@@ -587,98 +526,64 @@ export default function NewPostModal({
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* AI Intelligence & Impact Panel (Unified Single Container) */}
-            <div className="bg-[#121B30] border border-slate-700/80 rounded-xl p-4 space-y-4">
-              
-              {/* Impact Score Hero */}
-              <div className="flex items-end justify-between pb-3 border-b border-slate-800">
-                <div>
-                  <span className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+              {/* Integrated Telemetry & AI Diagnosis (Inside the SAME unified card) */}
+              <div className="p-4 bg-[#0B142A] border-t border-slate-800/90 space-y-3">
+                {/* Impact Meter */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
                     <Flame className="w-3.5 h-3.5 text-amber-400" />
-                    Impact Completeness
+                    Completeness Score: <strong className="text-white font-bold">{estimatedImpact}</strong>
                   </span>
-                  <div className="flex items-baseline gap-1 mt-0.5">
-                    <span className="text-2xl font-black text-white tabular-nums">
-                      {estimatedImpact}
-                    </span>
-                    <span className="text-xs font-semibold text-slate-400">/ 10</span>
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-slate-500 block">Target Threshold</span>
-                  <span className="text-xs font-bold text-emerald-400">100 Votes (Escalation)</span>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                <div 
-                  className="bg-gradient-to-r from-sky-400 via-amber-400 to-emerald-400 h-full rounded-full transition-all duration-300"
-                  style={{ width: `${impactPercentage}%` }}
-                />
-              </div>
-
-              {/* AI Triage Section */}
-              <div className="pt-1">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-sky-400" />
-                    AI Triage
+                  <span className="text-[11px] text-emerald-400 font-semibold">
+                    100 Votes = Auto-Escalation
                   </span>
-                  {triageData && !isAnalyzing && (
-                    <span className="text-[11px] font-bold text-emerald-400">
-                      {triageData.confidence}% Confidence
-                    </span>
-                  )}
                 </div>
 
-                {isAnalyzing ? (
-                  <div className="p-3 rounded-lg bg-sky-500/10 border border-sky-500/20 text-xs text-sky-300 flex items-center gap-2 animate-pulse">
-                    <Loader2 className="w-4 h-4 animate-spin text-sky-400 shrink-0" />
-                    <span>Scanning landmarks & extracting context...</span>
-                  </div>
-                ) : triageData ? (
-                  <div className="space-y-2.5">
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2 bg-[#142038] border border-slate-700/60 rounded-lg">
-                        <span className="text-[10px] text-slate-400 block">Category</span>
-                        <strong className="text-white text-xs truncate block">{triageData.category}</strong>
-                      </div>
-                      <div className="p-2 bg-[#142038] border border-slate-700/60 rounded-lg">
-                        <span className="text-[10px] text-slate-400 block">Dept</span>
-                        <strong className="text-white text-xs truncate block">{triageData.department}</strong>
-                      </div>
+                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-gradient-to-r from-sky-400 via-amber-400 to-emerald-400 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${impactPercentage}%` }}
+                  />
+                </div>
+
+                {/* AI Triage Intelligence */}
+                {triageData && !isAnalyzing ? (
+                  <div className="p-2.5 rounded-lg bg-[#0F1C38] border border-slate-700/80 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-bold text-sky-300 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        AI Verified ({triageData.confidence}%)
+                      </span>
+                      <span className="text-[11px] text-slate-400">{triageData.department}</span>
                     </div>
 
                     <button
                       type="button"
                       onClick={handleApplyTriage}
                       disabled={isApplied}
-                      className={`w-full py-2 px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
+                      className={`w-full py-1.5 px-3 rounded text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
                         isApplied
                           ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-sm'
+                          : 'bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold'
                       }`}
                     >
                       {isApplied ? (
                         <>
                           <CheckCheck className="w-3.5 h-3.5" />
-                          <span>Applied to ticket fields</span>
+                          <span>Applied to ticket</span>
                         </>
                       ) : (
                         <>
                           <Sparkles className="w-3.5 h-3.5" />
-                          <span>Apply suggestions to ticket</span>
+                          <span>Apply AI Suggestions to Form</span>
                         </>
                       )}
                     </button>
                   </div>
                 ) : (
-                  <p className="text-xs text-slate-400 bg-[#142038] p-2.5 rounded-lg border border-slate-800 text-center">
-                    Upload or select a photo sample to activate automatic AI diagnosis.
+                  <p className="text-[11px] text-slate-400 text-center py-1">
+                    AI auto-routing and department classification activate upon photo upload.
                   </p>
                 )}
               </div>
@@ -690,7 +595,7 @@ export default function NewPostModal({
         </div>
 
         {/* Unified Bottom Footer */}
-        <div className="px-6 py-3.5 border-t border-slate-800 bg-[#101A30] flex items-center justify-between shrink-0">
+        <div className="px-6 py-3.5 border-t border-slate-800 bg-[#0E1830] flex items-center justify-between shrink-0">
           <span className="text-xs text-slate-400 hidden sm:inline-flex items-center gap-1.5">
             <span>Press</span>
             <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-200 font-mono text-[10px]">Ctrl</kbd>
