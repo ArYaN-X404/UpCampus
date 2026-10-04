@@ -6,7 +6,8 @@ import { Post, PostComment, PostStatus, Profile, StatusEvent, UserRole } from '.
 import { supabase, isSupabaseConfigured } from './supabase/client';
 
 export interface UpCampusContextType {
-  currentUser: Profile;
+  currentUser: Profile | null;
+  isAuthenticated: boolean;
   currentRole: UserRole;
   switchRole: (role: UserRole) => void;
   isAdmin: boolean;
@@ -32,6 +33,7 @@ export interface UpCampusContextType {
   resetDemoData: () => void;
   searchSimilar: (query: string, locationId?: number) => Post[];
   login: (email: string, pass: string) => Promise<boolean>;
+  loginAsDemo: (role: 'admin' | 'student' | 'supervisor') => void;
   signUp: (email: string, pass: string, name?: string, role?: 'student' | 'admin') => Promise<boolean>;
   logout: () => void;
   isAuthModalOpen: boolean;
@@ -291,13 +293,8 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [posts, statusEvents, comments, currentRole, isAdmin, authenticatedUser, isLoaded]);
 
-  const currentUser: Profile = authenticatedUser || (
-    currentRole === 'admin' || isAdmin
-      ? MOCK_PROFILES['admin-1']
-      : currentRole === 'supervisor'
-        ? MOCK_PROFILES['supervisor-1']
-        : MOCK_PROFILES['student-1']
-  );
+  const currentUser: Profile | null = authenticatedUser;
+  const isAuthenticated = Boolean(authenticatedUser);
 
   const switchRole = (role: UserRole) => {
     setCurrentRole(role);
@@ -399,8 +396,8 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       to_status: targetStatus,
       remark: reason || (action === 'approve' ? 'Approved by Supervisor for public campus ranking.' : 'Rejected during moderation.'),
       pinned: false,
-      actor_id: currentUser.id,
-      actor: currentUser,
+      actor_id: currentUser?.id || 'admin-1',
+      actor: currentUser || MOCK_PROFILES['admin-1'],
       created_at: new Date().toISOString(),
     };
 
@@ -429,8 +426,8 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       to_status: newStatus,
       remark: remark || `Status changed to ${newStatus.replace('_', ' ')}`,
       pinned,
-      actor_id: currentUser.id,
-      actor: currentUser,
+      actor_id: currentUser?.id || 'admin-1',
+      actor: currentUser || MOCK_PROFILES['admin-1'],
       created_at: new Date().toISOString(),
     };
 
@@ -530,12 +527,14 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addComment = (postId: string, text: string): PostComment => {
+    const authorName = currentUser?.display_name || 'Student Citizen';
+    const authorId = currentUser?.id || 'student-1';
     const newComment: PostComment = {
       id: `c-${Date.now()}`,
       post_id: postId,
-      author_id: currentUser.id,
-      author_name: currentUser.display_name,
-      author_handle: currentUser.display_name.toLowerCase().replace(/\s+/g, '_'),
+      author_id: authorId,
+      author_name: authorName,
+      author_handle: authorName.toLowerCase().replace(/\s+/g, '_'),
       text: text.trim(),
       created_at: new Date().toISOString(),
       votes: 1,
@@ -632,6 +631,29 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const loginAsDemo = (role: 'admin' | 'student' | 'supervisor') => {
+    let profile: Profile;
+    if (role === 'admin') {
+      profile = MOCK_PROFILES['admin-1'];
+      setIsAdmin(true);
+      setCurrentRole('admin');
+    } else if (role === 'supervisor') {
+      profile = MOCK_PROFILES['supervisor-1'];
+      setIsAdmin(false);
+      setCurrentRole('supervisor');
+    } else {
+      profile = MOCK_PROFILES['student-1'];
+      setIsAdmin(false);
+      setCurrentRole('student');
+    }
+    setAuthenticatedUser(profile);
+    try {
+      localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(profile));
+      localStorage.setItem(STORAGE_KEY_ROLE, profile.role);
+      localStorage.setItem(STORAGE_KEY_ADMIN, String(profile.role === 'admin'));
+    } catch {}
+  };
+
   const logout = () => {
     setAuthenticatedUser(null);
     setCurrentRole('student');
@@ -678,6 +700,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
     <UpCampusContext.Provider
       value={{
         currentUser,
+        isAuthenticated,
         currentRole,
         switchRole,
         isAdmin,
@@ -701,6 +724,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
         addComment,
         deleteComment,
         login,
+        loginAsDemo,
         signUp,
         logout,
         isAuthModalOpen,

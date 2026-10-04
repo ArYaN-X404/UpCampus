@@ -42,6 +42,11 @@ export default function FeedPage() {
   const [resolvingPostId, setResolvingPostId] = useState<string | null>(null);
   const [adminNoteInput, setAdminNoteInput] = useState('');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Counts for tabs with null safety
   const complaintCount = (posts || []).filter((p) => p && p.kind === 'grievance' && p.status !== 'resolved').length;
@@ -217,7 +222,7 @@ export default function FeedPage() {
       </section>
 
       {/* Admin Mode Alert Notice if Active */}
-      {isAdmin && (
+      {mounted && isAdmin && (
         <div className="badge-mint rounded-2xl p-4 flex items-center gap-3 text-xs sm:text-sm font-semibold shadow-sm fade-in">
           <ShieldCheck className="w-5 h-5 text-mintGreen flex-shrink-0" />
           <span className="text-softWhite">

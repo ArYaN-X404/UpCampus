@@ -20,6 +20,11 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
   const [copied, setCopied] = useState(false);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [commentInput, setCommentInput] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const safeId = String(post.id || 'post-1');
   const agreeCount = typeof post.agree_count === 'number' && !isNaN(post.agree_count) ? post.agree_count : 0;
@@ -53,7 +58,7 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
 
   const postComments = comments[post.id] || [];
   const commentCount = postComments.length;
-  const isOwner = currentUser?.id === post.author_id || post.author_id === 'student-1' || isAdmin;
+  const isOwner = mounted && (Boolean(currentUser?.id && currentUser.id === post.author_id) || post.author_id === 'student-1' || isAdmin);
 
   const handleDeletePost = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -366,7 +371,7 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
 
           {/* Right Status Pill & Admin Action (.sp) */}
           <div className="uc-sp">
-            {isAdmin && !isSolved && (
+            {mounted && isAdmin && !isSolved && (
               <button
                 onClick={() => onResolveClick?.(post.id)}
                 className="uc-mb s flex items-center gap-1.5 shadow-sm active:scale-95"
