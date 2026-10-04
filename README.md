@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎓 UpCampus — Autonomous Campus Triage & Governance Engine
 
-## Getting Started
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Powered by: Gemma 4](https://img.shields.io/badge/AI-Gemma%204%20Multimodal-4285F4.svg)](https://ai.google.dev/)
+[![Standard: Agent Skill](https://img.shields.io/badge/Standard-Agent%20Skill%20v1.0-emerald.svg)](./skills/gemma-campus-triage/SKILL.md)
+[![Next.js](https://img.shields.io/badge/Next.js-14.2-black.svg)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6.svg)](https://www.typescriptlang.org/)
 
-First, run the development server:
+> **Autonomous Multimodal Infrastructure Triage, Hazard Scoring & Real-Time Campus Governance powered by Google Gemma 4.**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🏆 Hackathon Challenge Alignments
+
+### 1. 🌟 Best Use of Gemma 4
+* **Multimodal Visual Intelligence:** UpCampus ingests student hazard photos directly in the post creation flow and feeds them through the **Gemma 4 Multimodal Triage Pipeline**.
+* **Zero-Overhead Routing:** Automatically extracts physical defect characteristics, estimates severity (1.0–10.0), classifies urgency (`urgent`, `medium`, `low`), and routes the ticket to the accountable campus division (Electrical, Sanitation, IT, Civil, Security, Welfare).
+* **Auto-Fill AI Assistance:** Synthesizes actionable incident titles and standardizes campus location landmarks automatically.
+
+### 2. 🌐 Best Open-Source AI Project
+* **Agent Skill Open Standard:** Fully implements an autonomous agent skill compliant with the [Agent Skill Open Standard](./skills/gemma-campus-triage/SKILL.md), enabling external AI agents to leverage UpCampus triage logic.
+* **Evaluation Benchmark Harness:** Includes an open-source model evaluation suite (`scripts/test_gemma_triage.ts`) assessing multi-scenario campus hazards with reproducible metrics.
+* **Open Source Commitment:** Released under the permissive **MIT License**.
+
+---
+
+## ⚡ Core Architecture
+
+```
+Student Captures Photo
+         │
+         ▼
+┌──────────────────────────────────────────────┐
+│  UpCampus Client (Next.js 14 + Tailwind)     │
+│  - Live Shimmer Analysis                     │
+│  - One-Click Triage Autofill                 │
+│  - Real-Time Completeness Meter              │
+└──────────────────────┬───────────────────────┘
+                       │ POST /api/triage
+                       ▼
+┌──────────────────────────────────────────────┐
+│  Gemma 4 Multimodal Triage Engine            │
+│  - Schema Validation (JSON Contract)         │
+│  - Gemini / Gemma Multimodal API Pipeline    │
+│  - Local Heuristic Zero-Latency Fallback     │
+└──────────────────────┬───────────────────────┘
+                       │
+       ┌───────────────┴───────────────┐
+       ▼                               ▼
+┌──────────────────────────┐    ┌──────────────────────────┐
+│  Campus Department Work  │    │  Agent Skill Standards   │
+│  Orders & Real-Time Wall │    │  Evaluation Harness      │
+└──────────────────────────┘    └──────────────────────────┘
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 Quick Start
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Clone & Install
+```bash
+git clone https://github.com/ArYaN-X404/UpCampus.git
+cd UpCampus
+npm install
+```
 
-## Learn More
+### 2. Configure Environment (Optional)
+```bash
+# Add your Gemini / Gemma API key for live multimodal cloud inference
+# If omitted, UpCampus automatically activates its local heuristic engine
+echo "GEMINI_API_KEY=your_key_here" > .env.local
+```
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Launch Development Server
+```bash
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view UpCampus in your browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧪 Run Model Evaluation Harness
 
-## Deploy on Vercel
+To execute the standardized benchmark suite across 5 realistic campus diagnostic scenarios:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npx ts-node scripts/test_gemma_triage.ts
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 📄 License
+This project is open-source and available under the [MIT License](./LICENSE).
