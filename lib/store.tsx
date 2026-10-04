@@ -31,6 +31,11 @@ export interface UpCampusContextType {
   deleteComment: (postId: string, commentId: string) => void;
   resetDemoData: () => void;
   searchSimilar: (query: string, locationId?: number) => Post[];
+  login: (email: string, pass: string) => Promise<boolean>;
+  signUp: (email: string, pass: string, name?: string, role?: 'student' | 'admin') => Promise<boolean>;
+  logout: () => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
 }
 
 const UpCampusContext = createContext<UpCampusContextType | undefined>(undefined);
@@ -41,6 +46,7 @@ const STORAGE_KEY_ROLE = 'upcampus_role_v2';
 const STORAGE_KEY_ADMIN = 'upcampus_admin_v2';
 const STORAGE_KEY_THEME = 'upcampus_theme_v2';
 const STORAGE_KEY_COMMENTS = 'upcampus_comments_v2';
+const STORAGE_KEY_USER = 'upcampus_user_v2';
 
 const INITIAL_COMMENTS: Record<string, PostComment[]> = {
   '1': [
@@ -146,6 +152,8 @@ export function sanitizePost(raw: any): Post {
 export function UpCampusProvider({ children }: { children: React.ReactNode }) {
   const [currentRole, setCurrentRole] = useState<UserRole>('student');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const [authenticatedUser, setAuthenticatedUser] = useState<Profile | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [posts, setPosts] = useState<Post[]>(() => INITIAL_POSTS.map(sanitizePost));
   const [statusEvents, setStatusEvents] = useState<Record<string, StatusEvent[]>>(MOCK_STATUS_EVENTS);
@@ -161,6 +169,16 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       const savedRole = localStorage.getItem(STORAGE_KEY_ROLE) as UserRole | null;
       const savedAdmin = localStorage.getItem(STORAGE_KEY_ADMIN);
       const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as 'light' | 'dark' | null;
+      const savedUser = localStorage.getItem(STORAGE_KEY_USER);
+
+      if (savedUser) {
+        try {
+          const u = JSON.parse(savedUser);
+          setAuthenticatedUser(u);
+          setCurrentRole(u.role);
+          setIsAdmin(u.role === 'admin');
+        } catch {}
+      }
 
       if (savedPosts) {
         const parsed = JSON.parse(savedPosts);
@@ -186,30 +204,42 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       } else {
         applyTheme('light');
       }
-
-      // Universal Vercel & Supabase Cloud Sync
-      if (isSupabaseConfigured()) {
-        supabase.from('posts').select('*').order('created_at', { ascending: false }).then(({ data, error }) => {
-          if (!error && Array.isArray(data) && data.length > 0) {
-            setPosts(data.map(sanitizePost));
-          }
-        });
-        supabase.from('comments').select('*').order('created_at', { ascending: true }).then(({ data, error }) => {
-          if (!error && Array.isArray(data) && data.length > 0) {
-            const grouped: Record<string, PostComment[]> = {};
-            data.forEach((c: any) => {
-              if (!grouped[c.post_id]) grouped[c.post_id] = [];
-              grouped[c.post_id].push(c);
-            });
-            setComments((prev) => ({ ...prev, ...grouped }));
-          }
-        });
-      }
     } catch {
       setPosts(INITIAL_POSTS.map(sanitizePost));
     } finally {
       setIsLoaded(true);
     }
+  }, []);
+
+  // Universal Cross-Device Background Sync (Works across all devices on Vercel)
+  useEffect(() => {
+    let isMounted = true;
+
+    const pullUniversal = async () => {
+      try {
+        const res = await fetch('/api/sync');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data && isMounted) {
+            if (Array.isArray(json.data.posts) && json.data.posts.length > 0) {
+              setPosts(json.data.posts.map(sanitizePost));
+            }
+            if (json.data.comments) {
+              setComments((prev) => ({ ...prev, ...json.data.comments }));
+            }
+          }
+        }
+      } catch {
+        // Fallback silently
+      }
+    };
+
+    pullUniversal();
+    const interval = setInterval(pullUniversal, 6000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const applyTheme = (t: 'light' | 'dark') => {
@@ -253,14 +283,21 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(STORAGE_KEY_COMMENTS, JSON.stringify(comments));
       localStorage.setItem(STORAGE_KEY_ROLE, currentRole);
       localStorage.setItem(STORAGE_KEY_ADMIN, String(isAdmin));
+      if (authenticatedUser) {
+        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(authenticatedUser));
+      } else {
+        localStorage.removeItem(STORAGE_KEY_USER);
+      }
     } catch {}
-  }, [posts, statusEvents, comments, currentRole, isAdmin, isLoaded]);
+  }, [posts, statusEvents, comments, currentRole, isAdmin, authenticatedUser, isLoaded]);
 
-  const currentUser = currentRole === 'admin' || isAdmin
-    ? MOCK_PROFILES['admin-1']
-    : currentRole === 'supervisor'
-      ? MOCK_PROFILES['supervisor-1']
-      : MOCK_PROFILES['student-1'];
+  const currentUser: Profile = authenticatedUser || (
+    currentRole === 'admin' || isAdmin
+      ? MOCK_PROFILES['admin-1']
+      : currentRole === 'supervisor'
+        ? MOCK_PROFILES['supervisor-1']
+        : MOCK_PROFILES['student-1']
+  );
 
   const switchRole = (role: UserRole) => {
     setCurrentRole(role);
@@ -436,6 +473,13 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
     const newPost = sanitizePost(rawPost);
     setPosts((prev) => [newPost, ...prev]);
 
+    // Push mutation to universal sync API for cross-device propagation
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create_post', post: newPost }),
+    }).catch(() => {});
+
     // Universal Cloud Database Sync
     if (isSupabaseConfigured()) {
       supabase.from('posts').insert({
@@ -471,6 +515,13 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
 
+    // Push deletion to universal sync API for all devices
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_post', postId }),
+    }).catch(() => {});
+
     if (isSupabaseConfigured()) {
       supabase.from('posts').delete().eq('id', postId).then(({ error }) => {
         if (error) console.warn('[Supabase Sync] delete post warning:', error.message);
@@ -495,6 +546,13 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       [postId]: [newComment, ...(prev[postId] || [])],
     }));
 
+    // Universal sync API dispatch
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'create_comment', comment: newComment }),
+    }).catch(() => {});
+
     if (isSupabaseConfigured()) {
       supabase.from('comments').insert(newComment).then(({ error }) => {
         if (error) console.warn('[Supabase Sync] insert comment warning:', error.message);
@@ -510,11 +568,79 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       [postId]: (prev[postId] || []).filter((c) => c.id !== commentId),
     }));
 
+    // Universal sync API dispatch
+    fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_comment', postId, commentId }),
+    }).catch(() => {});
+
     if (isSupabaseConfigured()) {
       supabase.from('comments').delete().eq('id', commentId).then(({ error }) => {
         if (error) console.warn('[Supabase Sync] delete comment warning:', error.message);
       });
     }
+  };
+
+  const login = async (email: string, pass: string): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email, password: pass }),
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setAuthenticatedUser(data.user);
+        setCurrentRole(data.user.role);
+        setIsAdmin(data.user.role === 'admin');
+        try {
+          localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
+          localStorage.setItem(STORAGE_KEY_ROLE, data.user.role);
+          localStorage.setItem(STORAGE_KEY_ADMIN, String(data.user.role === 'admin'));
+        } catch {}
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const signUp = async (email: string, pass: string, name?: string, role?: 'student' | 'admin'): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'signup', email, password: pass, name, role }),
+      });
+      const data = await res.json();
+      if (data.success && data.user) {
+        setAuthenticatedUser(data.user);
+        setCurrentRole(data.user.role);
+        setIsAdmin(data.user.role === 'admin');
+        try {
+          localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(data.user));
+          localStorage.setItem(STORAGE_KEY_ROLE, data.user.role);
+          localStorage.setItem(STORAGE_KEY_ADMIN, String(data.user.role === 'admin'));
+        } catch {}
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  const logout = () => {
+    setAuthenticatedUser(null);
+    setCurrentRole('student');
+    setIsAdmin(false);
+    try {
+      localStorage.removeItem(STORAGE_KEY_USER);
+      localStorage.setItem(STORAGE_KEY_ROLE, 'student');
+      localStorage.setItem(STORAGE_KEY_ADMIN, 'false');
+    } catch {}
   };
 
   const searchSimilar = (query: string, locationId?: number) => {
@@ -537,12 +663,14 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
     setComments(INITIAL_COMMENTS);
     setCurrentRole('student');
     setIsAdmin(false);
+    setAuthenticatedUser(null);
     try {
       localStorage.removeItem(STORAGE_KEY_POSTS);
       localStorage.removeItem(STORAGE_KEY_EVENTS);
       localStorage.removeItem(STORAGE_KEY_COMMENTS);
       localStorage.removeItem(STORAGE_KEY_ROLE);
       localStorage.removeItem(STORAGE_KEY_ADMIN);
+      localStorage.removeItem(STORAGE_KEY_USER);
     } catch {}
   };
 
@@ -572,6 +700,11 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
         deletePost,
         addComment,
         deleteComment,
+        login,
+        signUp,
+        logout,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
         resetDemoData,
         searchSimilar,
       }}
