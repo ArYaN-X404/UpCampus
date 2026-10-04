@@ -30,7 +30,7 @@ export default function Navbar({ onOpenPostModal }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-40 glass-nav transition-all">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 h-16 flex items-center justify-between gap-4">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 select-none group">
           <div className="bg-gradient-to-tr from-skyBlue via-sky-400 to-mintGreen text-deepNavy w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-lg shadow-lg shadow-skyBlue/20 group-hover:scale-105 transition-transform">

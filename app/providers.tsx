@@ -12,7 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <UpCampusProvider>
       <div className="flex flex-col min-h-screen">
         <Navbar onOpenPostModal={() => setIsNewPostModalOpen(true)} />
-        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 flex flex-col">
+        <main className="flex-1 w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-8 flex flex-col">
           {children}
         </main>
       </div>
