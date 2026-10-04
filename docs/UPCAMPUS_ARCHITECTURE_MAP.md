@@ -3,6 +3,7 @@
 > **Status:** Synchronized & Verified  
 > **Last Verification:** `npm run build` exited with Code 0  
 > **Next.js Version:** 14.2.15 App Router | **Node:** v22.18.0
+> **Design Alignment:** Adapted to `up_campus_code.html` & `upcampus.html` (Inter sans, dual theme, 100-vote escalation, admin note resolve)
 
 ---
 
@@ -11,10 +12,10 @@
 ```
 d:/Projects/UpCampus/
 ├── app/
-│   ├── layout.tsx              # Root HTML shell, Google Fonts (DM Serif Display, Manrope), dark theme class
-│   ├── globals.css             # Base design tokens, custom thin scrollbars, glassmorphism utilities
-│   ├── providers.tsx           # UpCampusProvider wrapper, sticky Navbar layout shell
-│   ├── page.tsx                # Public Feed: Hero stats, Grievance/Suggestion tabs, Safety priority lane
+│   ├── layout.tsx              # Root HTML shell, Google Fonts (Inter), dual light/dark class
+│   ├── globals.css             # Dual theme CSS vars, pulse-red animation, modal-enter, glassmorphism
+│   ├── providers.tsx           # UpCampusProvider wrapper, sticky Navbar layout shell (max-w-6xl)
+│   ├── page.tsx                # Public Feed: Hero banner, Broken (Fix It) / Needs (Add It) / Solved tabs, 100-vote modal
 │   ├── post/[id]/page.tsx      # Post Deep Inspection: Photo preview, Pinned remark, Public resolution timeline
 │   ├── queue/page.tsx          # Supervisor Fast-Path Deck: Hotkey listener (A/R/E), split triage inspector
 │   ├── admin/page.tsx          # Facility Control Room: 3-column Kanban board, Dept velocity KPI strip
@@ -22,25 +23,24 @@ d:/Projects/UpCampus/
 │   └── live/page.tsx           # Projector Resolution Wall: Realtime dynamic bars, QR code, Live ticker
 ├── components/
 │   ├── feed/
-│   │   └── PostCard.tsx        # Card with Left Vote Rail (▲ count ▼), Impact Badge, Verification Card
+│   │   └── PostCard.tsx        # Card with Left Vote Rail (▲ count ▼), 100-vote escalation badge, Admin resolve button
 │   ├── layout/
-│   │   └── Navbar.tsx          # Brand header, dynamic route badges, One-Tap Demo Role Switcher (Student/Supervisor/Admin)
+│   │   └── Navbar.tsx          # Brand header (Up Campus), Theme toggle (Light/Dark), Admin View switch, Post Issue CTA
 │   └── post/
-│       └── NewPostModal.tsx    # Snap evidence, AI photo triage shimmer, live debounced duplicate interceptor
+│       └── NewPostModal.tsx    # Radio category cards, AI duplicate alert box with Upvote Existing Instead, photo picker
 ├── lib/
-│   ├── types.ts                # Canonical domain models: Post, Profile, StatusEvent, CampusLocation, UserRole
-│   ├── store.tsx               # State Provider: Optimistic voting, local persistence, role impersonator
+│   ├── types.ts                # Canonical domain models: Post (admin_note), Profile, StatusEvent, UserRole
+│   ├── store.tsx               # State Provider: isAdmin toggle, theme switcher, 100-vote escalation alert trigger
 │   ├── data/
-│   │   └── mockData.ts         # Realistic campus seed: Hinglish posts, real hostels, status lifecycle items
+│   │   └── mockData.ts         # Realistic campus seed: Post 1 seeded at 99 votes for instant 100-vote escalation demo
 │   └── supabase/
-│       ├── client.ts           # Browser Supabase client with graceful fallback checker
+│       ├── client.ts           # Browser Supabase client
 │       └── server.ts           # Server client
 ├── supabase/
 │   └── schema.sql              # Production Postgres DDL: Tables, Enums, Triggers, RLS, post_scores View, similar_posts RPC
-├── tailwind.config.ts          # Semantic color tokens: campus-bg (#0A1330), surface (#121F4A), teal (#2DD4BF), amber, pink
-├── UPCAMPUS_ARCHITECTURE_AND_ROADMAP.md # Master architectural document & execution plan
+├── tailwind.config.ts          # Color tokens and Inter typography config
 └── docs/
-    └── UPCAMPUS_ARCHITECTURE_AND_ROADMAP.md
+    └── UPCAMPUS_ARCHITECTURE_MAP.md
 ```
 
 ---
@@ -49,13 +49,11 @@ d:/Projects/UpCampus/
 
 | Symbol | Location | Responsibility |
 | :--- | :--- | :--- |
-| `useUpCampus()` | [`lib/store.tsx`](file:///d:/Projects/UpCampus/lib/store.tsx) | Hook exposing `posts`, `currentUser`, `upvotePost`, `moderatePost`, `updatePostStatus`, `verifyPost`, `resetDemoData` |
-| `PostCard` | [`components/feed/PostCard.tsx`](file:///d:/Projects/UpCampus/components/feed/PostCard.tsx) | Renders grievance/suggestion card, handles vote clicks, displays verification action card |
-| `NewPostModal` | [`components/post/NewPostModal.tsx`](file:///d:/Projects/UpCampus/components/post/NewPostModal.tsx) | Multi-step issue reporter with sample photo AI triage & live debounced duplicate detector |
-| `Navbar` | [`components/layout/Navbar.tsx`](file:///d:/Projects/UpCampus/components/layout/Navbar.tsx) | Sticky header with live counts and 1-tap role switcher |
-| `MOCK_LOCATIONS` | [`lib/data/mockData.ts`](file:///d:/Projects/UpCampus/lib/data/mockData.ts) | 8 real campus locations (Hostel 7, Chemistry Block, Central Library, etc.) |
-| `post_scores` | [`supabase/schema.sql`](file:///d:/Projects/UpCampus/supabase/schema.sql) | SQL View computing Impact Score = `net_votes * severity_mult + min(days, 14)*0.5 + safety_bump` |
-| `similar_posts()` | [`supabase/schema.sql`](file:///d:/Projects/UpCampus/supabase/schema.sql) | Postgres RPC executing trigram similarity against open approved issues |
+| `useUpCampus()` | [`lib/store.tsx`](file:///d:/Projects/UpCampus/lib/store.tsx) | Hook exposing `posts`, `isAdmin`, `toggleAdmin`, `theme`, `toggleTheme`, `escalatedPost`, `vote`, `resolvePostWithAdminNote` |
+| `PostCard` | [`components/feed/PostCard.tsx`](file:///d:/Projects/UpCampus/components/feed/PostCard.tsx) | Renders grievance/suggestion card with left vote rail, 100-vote escalation badge, and Admin: Mark Resolved action |
+| `NewPostModal` | [`components/post/NewPostModal.tsx`](file:///d:/Projects/UpCampus/components/post/NewPostModal.tsx) | Issue reporter with radio categories, AI photo context prefill, and realtime duplicate matcher |
+| `Navbar` | [`components/layout/Navbar.tsx`](file:///d:/Projects/UpCampus/components/layout/Navbar.tsx) | Header with brand logo, light/dark switcher, Admin View switch, and Post Issue CTA |
+| `INITIAL_POSTS` | [`lib/data/mockData.ts`](file:///d:/Projects/UpCampus/lib/data/mockData.ts) | Realistic seed dataset with Post 1 at 99 votes to demo live 100-vote escalation trigger |
 
 ---
 

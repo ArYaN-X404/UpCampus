@@ -1,24 +1,18 @@
 import type { Metadata } from "next";
-import { Manrope, DM_Serif_Display } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const manrope = Manrope({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-manrope",
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
-
-const dmSerif = DM_Serif_Display({
-  subsets: ["latin"],
-  variable: "--font-dm-serif",
-  weight: ["400"],
+  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
-  title: "UpCampus — Campus Transparency & Resolution Platform",
+  title: "Up Campus — Student Governance OS",
   description:
-    "Fix what is broken. Build what is missing. Transparent, vote-ranked campus governance and proof of resolution.",
+    "Fix what's broken. Build what's missing. Report campus issues and suggest amenities with automated escalation.",
 };
 
 export default function RootLayout({
@@ -27,9 +21,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="light" id="theme-root">
       <body
-        className={`${manrope.variable} ${dmSerif.variable} font-sans bg-campus-bg text-slate-100 min-h-screen selection:bg-campus-teal/30 selection:text-campus-teal`}
+        className={`${inter.variable} font-sans antialiased min-h-screen flex flex-col selection:bg-teal-200 selection:text-teal-900`}
       >
         <Providers>{children}</Providers>
       </body>

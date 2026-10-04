@@ -59,8 +59,10 @@ export interface Post {
   net_votes?: number;
   impact_score?: number;
   location?: CampusLocation | null;
+  location_name?: string;
   author_name?: string;
   user_vote?: 1 | -1 | null;
+  admin_note?: string | null;
 }
 
 export interface Vote {

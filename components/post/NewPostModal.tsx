@@ -2,385 +2,336 @@
 
 import React, { useState, useEffect } from 'react';
 import { useUpCampus } from '@/lib/store';
-import { MOCK_LOCATIONS } from '@/lib/data/mockData';
-import { Post, PostKind } from '@/lib/types';
+import { PostKind } from '@/lib/types';
 import { 
   X, 
-  Camera, 
-  Sparkles, 
-  AlertTriangle, 
+  PenTool, 
+  Wrench, 
+  Plus, 
+  Bot, 
+  ArrowUp, 
+  Sparkles,
   Loader2 
 } from 'lucide-react';
 
 interface NewPostModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultType?: 'complaint' | 'suggestion';
 }
 
-export default function NewPostModal({ isOpen, onClose }: NewPostModalProps) {
+export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestion' }: NewPostModalProps) {
   const { addPost, searchSimilar, upvotePost } = useUpCampus();
 
-  const [kind, setKind] = useState<PostKind>('grievance');
+  const [kind, setKind] = useState<PostKind>(defaultType === 'complaint' ? 'grievance' : 'suggestion');
   const [title, setTitle] = useState('');
+  const [location, setLocation] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('Electrical');
-  const [severity, setSeverity] = useState<1 | 2 | 3>(2);
-  const [safetyRisk, setSafetyRisk] = useState(false);
-  const [department, setDepartment] = useState('Electrical Maintenance');
-  const [locationId, setLocationId] = useState<number>(1);
-  const [anonymous, setAnonymous] = useState(false);
   const [photoUrl, setPhotoUrl] = useState<string>('');
+  const [matchedPost, setMatchedPost] = useState<{ id: string; title: string; count: number } | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [aiSuggested, setAiSuggested] = useState(false);
-  const [similarPosts, setSimilarPosts] = useState<Post[]>([]);
-  const [ignoredDuplicate, setIgnoredDuplicate] = useState(false);
 
-  // Debounced duplicate detection
+  // Debounced duplicate checker matching up_campus_code.html
   useEffect(() => {
-    if (ignoredDuplicate || title.trim().length < 4) {
-      setSimilarPosts([]);
+    if (!title.trim() || title.length < 5) {
+      setMatchedPost(null);
       return;
     }
 
     const timer = setTimeout(() => {
-      const results = searchSimilar(title, locationId);
-      setSimilarPosts(results);
-    }, 280);
+      const results = searchSimilar(title);
+      if (results && results.length > 0) {
+        setMatchedPost({
+          id: results[0].id,
+          title: results[0].title,
+          count: results[0].agree_count,
+        });
+      } else {
+        setMatchedPost(null);
+      }
+    }, 250);
 
     return () => clearTimeout(timer);
-  }, [title, locationId, ignoredDuplicate, searchSimilar]);
+  }, [title, searchSimilar]);
 
   if (!isOpen) return null;
 
-  // Simulate AI photo triage
   const handlePhotoSelect = (sampleUrl: string) => {
     setPhotoUrl(sampleUrl);
     setIsAnalyzing(true);
 
     setTimeout(() => {
       setIsAnalyzing(false);
-      setAiSuggested(true);
-
-      // Intelligent prefill based on sample photo context
       if (sampleUrl.includes('street') || sampleUrl.includes('dark')) {
-        setTitle('Broken streetlight and unlit bend near hostel path');
-        setDescription('Corridor has zero illumination after sunset. Students walking from library face dark hazard.');
-        setCategory('Electrical');
-        setSeverity(3);
-        setSafetyRisk(true);
-        setDepartment('Electrical Maintenance');
-        setLocationId(1);
-      } else if (sampleUrl.includes('water') || sampleUrl.includes('sink') || sampleUrl.includes('tap')) {
-        setTitle('Major water tap leak causing flooding on floor');
-        setDescription('Pressure valve burst causing continuous stream of water along hallway.');
-        setCategory('Plumbing');
-        setSeverity(2);
-        setSafetyRisk(false);
-        setDepartment('Sanitation & Water Works');
-        setLocationId(4);
+        setTitle('Street lights fused on Girls Hostel pathway');
+        setLocation('Hostel Block 3 Road');
+        setDescription('Total darkness after 7 PM creates safety hazards for students walking back from evening labs.');
+        setKind('grievance');
+      } else if (sampleUrl.includes('water') || sampleUrl.includes('sink')) {
+        setTitle('Severe water leakage in washroom');
+        setLocation('3rd Floor Washrooms');
+        setDescription('Continuous leak causing flooded corridor and low water pressure.');
+        setKind('grievance');
       } else {
-        setTitle('Damaged furniture and power strip sockets in study room');
-        setCategory('Infrastructure');
-        setSeverity(1);
-        setDepartment('Estate & Infrastructure');
-        setLocationId(3);
+        setTitle('Need a Snack Vending Machine in Library');
+        setLocation('Central Library Basement');
+        setDescription('Automated vending machine would support late night exam prep sessions.');
+        setKind('suggestion');
       }
-    }, 1200);
+    }, 900);
+  };
+
+  const handleUpvoteMatched = () => {
+    if (matchedPost) {
+      upvotePost(matchedPost.id);
+      onClose();
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
-    const loc = MOCK_LOCATIONS.find((l) => l.id === locationId);
-
     addPost({
       author_id: 'student-1',
       kind,
       title: title.trim(),
       description: description.trim() || null,
-      category,
-      severity,
-      safety_risk: safetyRisk,
-      department,
-      location_id: locationId,
-      location: loc,
+      category: kind === 'grievance' ? 'Broken' : 'Needs',
+      severity: kind === 'grievance' ? 2 : 1,
+      safety_risk: title.toLowerCase().includes('dark') || title.toLowerCase().includes('leak'),
+      department: kind === 'grievance' ? 'Maintenance' : 'Student Amenities',
+      location_name: location.trim() || 'Campus Grounds',
       photos: photoUrl ? [photoUrl] : [],
-      anonymous,
-      status: 'pending',
-      author_name: anonymous ? 'Anonymous Student' : 'Aarav Sharma (CS-25)',
-      ai_meta: aiSuggested
-        ? { confidence: 0.92, detected_tags: ['photo_triaged', category.toLowerCase()] }
-        : null,
+      anonymous: false,
+      status: 'approved',
+      author_name: 'Aarav Sharma (CS-25)',
     });
 
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-campus-bg/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
-      <div className="w-full max-w-2xl bg-campus-surface border border-campus-border rounded-3xl p-6 sm:p-8 shadow-2xl relative my-8">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-4 border-b border-campus-border mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-campus-teal/20 border border-campus-teal/40 flex items-center justify-center text-campus-teal shadow-glow">
-              <Camera className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold font-heading text-white">
-                Snap & Report Campus Issue
-              </h2>
-              <p className="text-xs text-slate-400">
-                AI will inspect your photo and prefill department and urgency.
-              </p>
-            </div>
-          </div>
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity fade-in overflow-y-auto">
+      <div className="glass-card rounded-[2rem] max-w-xl w-full p-6 sm:p-8 shadow-2xl relative my-8 modal-enter border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-7">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xl shadow-sm border border-teal-100 dark:border-teal-800">
+            <PenTool className="w-6 h-6 stroke-[2]" />
+          </div>
+          <div>
+            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white">Create Post</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Submit a new request or report a broken facility on campus.
+            </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Post Kind Selector */}
-          <div className="grid grid-cols-2 gap-2 bg-campus-bg/80 p-1 rounded-xl border border-campus-border">
-            <button
-              type="button"
-              onClick={() => setKind('grievance')}
-              className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                kind === 'grievance'
-                  ? 'bg-campus-pink text-campus-bg shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Fix a Broken Thing (Grievance)
-            </button>
-            <button
-              type="button"
-              onClick={() => setKind('suggestion')}
-              className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                kind === 'suggestion'
-                  ? 'bg-campus-amber text-campus-bg shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Build What is Missing (Suggestion)
-            </button>
+          {/* Category Radio Cards */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+              Post Category
+            </label>
+            <div className="grid grid-cols-2 gap-4">
+              <label
+                className={`cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-start gap-1.5 transition-all shadow-sm ${
+                  kind === 'grievance'
+                    ? 'border-teal-500 bg-teal-50/70 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="postType"
+                    value="grievance"
+                    checked={kind === 'grievance'}
+                    onChange={() => setKind('grievance')}
+                    className="text-teal-600 focus:ring-teal-500 w-4 h-4"
+                  />
+                  <span className="text-sm font-bold flex items-center gap-1.5">
+                    <Wrench className="w-4 h-4 text-amber-500" />
+                    Complaint
+                  </span>
+                </div>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium pl-6">
+                  Report broken things (Fix It).
+                </span>
+              </label>
+
+              <label
+                className={`cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-start gap-1.5 transition-all shadow-sm ${
+                  kind === 'suggestion'
+                    ? 'border-teal-500 bg-teal-50/70 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200'
+                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-200'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="postType"
+                    value="suggestion"
+                    checked={kind === 'suggestion'}
+                    onChange={() => setKind('suggestion')}
+                    className="text-teal-600 focus:ring-teal-500 w-4 h-4"
+                  />
+                  <span className="text-sm font-bold flex items-center gap-1.5">
+                    <Plus className="w-4 h-4 text-teal-500 stroke-[3]" />
+                    Suggestion
+                  </span>
+                </div>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium pl-6">
+                  Request additions (Add It).
+                </span>
+              </label>
+            </div>
           </div>
 
-          {/* Photo Triage Demo Selectors */}
+          {/* Quick Camera Evidence Picker */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center justify-between">
-              <span>Step 1: Snap or Upload Evidence</span>
-              {aiSuggested && (
-                <span className="text-[11px] font-semibold text-campus-teal flex items-center gap-1 normal-case">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  AI Triage Completed
+            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+              <span>Photo Evidence (AI Triage)</span>
+              {photoUrl && (
+                <span className="text-teal-600 dark:text-teal-400 flex items-center gap-1 normal-case font-semibold">
+                  <Sparkles className="w-3 h-3" />
+                  Auto-Analyzed
                 </span>
               )}
-            </label>
+            </div>
 
-            {/* Quick demo photos picker */}
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-3 gap-2">
               {[
-                {
-                  label: 'Dark Streetlight',
-                  url: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=1200&q=80',
-                },
-                {
-                  label: 'Plumbing Leak',
-                  url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1200&q=80',
-                },
-                {
-                  label: 'Lab Workstation',
-                  url: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=1200&q=80',
-                },
-              ].map((sample, idx) => (
+                { label: 'Library Vending', url: 'https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80' },
+                { label: 'Hostel Streetlight', url: 'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=600&q=80' },
+                { label: 'Washroom Tap Leak', url: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=600&q=80' },
+              ].map((s, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => handlePhotoSelect(sample.url)}
-                  className={`p-2 rounded-xl border text-left flex flex-col items-center gap-1.5 transition-all ${
-                    photoUrl === sample.url
-                      ? 'border-campus-teal bg-campus-teal/15 shadow-glow'
-                      : 'border-campus-border bg-campus-bg/60 hover:border-slate-500'
+                  onClick={() => handlePhotoSelect(s.url)}
+                  className={`p-1.5 rounded-xl border text-center transition-all ${
+                    photoUrl === s.url
+                      ? 'border-teal-500 bg-teal-50 dark:bg-teal-950'
+                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
                   }`}
                 >
-                  <div className="w-full h-14 rounded-lg overflow-hidden bg-slate-900">
-                    <img src={sample.url} alt={sample.label} className="w-full h-full object-cover" />
-                  </div>
-                  <span className="text-[11px] font-semibold text-slate-300">{sample.label}</span>
+                  <img src={s.url} alt={s.label} className="w-full h-12 object-cover rounded-lg mb-1" />
+                  <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 block truncate">{s.label}</span>
                 </button>
               ))}
             </div>
 
             {isAnalyzing && (
-              <div className="p-3 bg-campus-teal/10 border border-campus-teal/30 rounded-xl flex items-center gap-2.5 text-campus-teal text-xs animate-pulse">
+              <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-xs flex items-center gap-2 animate-pulse">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Gemini Vision inspecting photo pixels: analyzing safety hazards & department...</span>
+                <span>AI inspecting photo context and prefilling details...</span>
               </div>
             )}
           </div>
 
-          {/* Title with Duplicate Detector */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-              Title of Issue
+          {/* Title Input (Triggers Realtime AI Duplicate Checker) */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+              Title
             </label>
             <input
               type="text"
               required
               value={title}
-              onChange={(e) => {
-                setTitle(e.target.value);
-                setIgnoredDuplicate(false);
-              }}
-              placeholder="e.g. Streetlight not working near Hostel 7 road bend"
-              className="w-full bg-campus-bg border border-campus-border rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-campus-teal transition-all"
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Need a vending machine in the library..."
+              className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:border-teal-500 transition-all font-semibold shadow-sm"
             />
           </div>
 
-          {/* Duplicate Alert Card if hits exist */}
-          {similarPosts.length > 0 && !ignoredDuplicate && (
-            <div className="p-3.5 bg-campus-amber/10 border border-campus-amber/40 rounded-xl space-y-2 animate-in slide-in-from-top-2">
-              <div className="flex items-center gap-2 text-campus-amber font-bold text-xs">
-                <AlertTriangle className="w-4 h-4" />
-                <span>Live Duplicate Interceptor: Similar open issues found on campus!</span>
-              </div>
-              <p className="text-xs text-slate-300">
-                To maximize campus attention, upvoting an existing ticket has more weight than creating a duplicate:
-              </p>
-              <div className="space-y-1.5">
-                {similarPosts.map((dupe) => (
-                  <div
-                    key={dupe.id}
-                    className="p-2.5 rounded-lg bg-campus-bg/80 border border-campus-border flex items-center justify-between gap-3 text-xs"
+          {/* AI Duplicate Alert Box matching up_campus_code.html */}
+          {matchedPost && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 shadow-sm fade-in">
+              <div className="flex gap-4 items-start">
+                <div className="bg-white dark:bg-slate-800 p-2.5 rounded-xl shadow-sm border border-amber-100 dark:border-amber-700 shrink-0">
+                  <Bot className="w-6 h-6 text-amber-500" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-amber-900 dark:text-amber-300 mb-1 flex items-center gap-2">
+                    Wait! Similar Post Found{' '}
+                    <span className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-100 text-[9px] uppercase px-2 py-0.5 rounded-full font-bold">
+                      AI Match
+                    </span>
+                  </h4>
+                  <p className="text-xs text-amber-700 dark:text-amber-400 mb-3 leading-relaxed">
+                    Someone already posted:{' '}
+                    <strong className="text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">
+                      &quot;{matchedPost.title}&quot;
+                    </strong>
+                    <br />
+                    Upvote theirs to help it reach the 100-vote threshold faster!
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleUpvoteMatched}
+                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                   >
-                    <span className="font-semibold text-slate-200 line-clamp-1">{dupe.title}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        upvotePost(dupe.id);
-                        onClose();
-                      }}
-                      className="px-3 py-1 bg-campus-teal text-campus-bg font-bold rounded-lg shadow-sm hover:scale-105 transition-transform flex-shrink-0"
-                    >
-                      Upvote This Instead (+{dupe.agree_count})
-                    </button>
-                  </div>
-                ))}
+                    <ArrowUp className="w-4 h-4 stroke-[3]" />
+                    <span>Upvote Existing Instead (+{matchedPost.count})</span>
+                  </button>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setIgnoredDuplicate(true)}
-                className="text-[11px] text-slate-400 hover:text-white underline pt-1 block"
-              >
-                No, my issue is physically different. Continue creating.
-              </button>
             </div>
           )}
 
-          {/* Description */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300">
-              Description & Context
+          {/* Location Input */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+              Location
             </label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide exact room/spot details, timing of breakdown, or safety implications..."
-              className="w-full bg-campus-bg border border-campus-border rounded-xl px-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-campus-teal transition-all"
+            <input
+              type="text"
+              required
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g., Central Library Ground Floor"
+              className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:border-teal-500 transition-all font-semibold shadow-sm"
             />
           </div>
 
-          {/* Category, Location & Severity Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-400">Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-campus-bg border border-campus-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-campus-teal"
-              >
-                <option value="Electrical">Electrical</option>
-                <option value="Plumbing">Plumbing</option>
-                <option value="Sanitation">Sanitation</option>
-                <option value="IT / Wi-Fi">IT / Wi-Fi</option>
-                <option value="Infrastructure">Infrastructure</option>
-                <option value="Safety">Safety & Security</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-400">Campus Location</label>
-              <select
-                value={locationId}
-                onChange={(e) => setLocationId(Number(e.target.value))}
-                className="w-full bg-campus-bg border border-campus-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-campus-teal"
-              >
-                {MOCK_LOCATIONS.map((loc) => (
-                  <option key={loc.id} value={loc.id}>
-                    {loc.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-400">Severity</label>
-              <select
-                value={severity}
-                onChange={(e) => {
-                  const val = Number(e.target.value) as 1 | 2 | 3;
-                  setSeverity(val);
-                  if (val === 3) setSafetyRisk(true);
-                }}
-                className="w-full bg-campus-bg border border-campus-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-campus-teal"
-              >
-                <option value={1}>Level 1: Minor</option>
-                <option value={2}>Level 2: Disruptive</option>
-                <option value={3}>Level 3: Safety Risk</option>
-              </select>
-            </div>
+          {/* Details */}
+          <div>
+            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+              Details
+            </label>
+            <textarea
+              rows={3}
+              required
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Explain why this needs to be addressed..."
+              className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:border-teal-500 transition-all font-medium resize-none shadow-sm"
+            />
           </div>
 
-          {/* Anonymous Toggle */}
-          <div className="flex items-center justify-between p-3 bg-campus-bg/60 border border-campus-border rounded-xl">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="anon"
-                checked={anonymous}
-                onChange={(e) => setAnonymous(e.target.checked)}
-                className="rounded border-campus-border text-campus-teal focus:ring-campus-teal w-4 h-4 bg-campus-bg"
-              />
-              <label htmlFor="anon" className="text-xs text-slate-200 cursor-pointer">
-                Post anonymously to peers
-              </label>
-            </div>
-            <span className="text-[10px] text-slate-400">
-              (Admins & Supervisors can verify student email against spam)
-            </span>
-          </div>
-
-          {/* Footer Actions */}
-          <div className="pt-2 flex items-center justify-end gap-3">
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+              className="px-6 py-3 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 bg-campus-teal hover:bg-teal-300 text-campus-bg font-bold text-xs rounded-xl shadow-glow transition-all"
+              className="px-8 py-3 text-sm font-bold bg-slate-900 hover:bg-teal-600 text-white dark:bg-teal-500 dark:hover:bg-teal-400 dark:text-slate-950 rounded-xl shadow-lg transition-all active:scale-95"
             >
-              Submit for Supervisor Review
+              Publish Post
             </button>
           </div>
         </form>

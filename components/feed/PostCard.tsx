@@ -7,280 +7,199 @@ import {
   ChevronUp, 
   ChevronDown, 
   MapPin, 
-  Flame, 
+  Wrench, 
+  Plus, 
+  Bell, 
+  Check, 
+  CheckCheck, 
   Clock, 
-  ShieldAlert, 
-  Building2, 
-  Sparkles,
-  CheckCircle2,
-  AlertCircle
+  ShieldCheck,
+  Building2
 } from 'lucide-react';
 import Link from 'next/link';
 
 interface PostCardProps {
   post: Post;
-  showVoteRail?: boolean;
+  onResolveClick?: (postId: string) => void;
 }
 
-export default function PostCard({ post, showVoteRail = true }: PostCardProps) {
-  const { upvotePost, downvotePost, verifyPost } = useUpCampus();
+export default function PostCard({ post, onResolveClick }: PostCardProps) {
+  const { vote, isAdmin } = useUpCampus();
 
-  const getStatusBadge = () => {
-    switch (post.status) {
-      case 'under_review':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-200 border border-slate-700">
-            <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
-            Under Review
-          </span>
-        );
-      case 'in_progress':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-500/40">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
-            In Progress
-          </span>
-        );
-      case 'awaiting_verification':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-purple-950/60 text-purple-300 border border-purple-500/40 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
-            Awaiting Verification
-          </span>
-        );
-      case 'resolved':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-500/40">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-            Solved & Verified
-          </span>
-        );
-      case 'reopened':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-950/60 text-rose-300 border border-rose-500/40">
-            <AlertCircle className="w-3 h-3 text-rose-400" />
-            Reopened by Students
-          </span>
-        );
-      case 'approved':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-campus-teal/10 text-campus-teal border border-campus-teal/30">
-            Approved (Ranked)
-          </span>
-        );
-      case 'pending':
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-yellow-950/40 text-yellow-300 border border-yellow-600/40">
-            Pending Review
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const getSeverityBadge = () => {
-    if (post.severity === 3 || post.safety_risk) {
-      return (
-        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-campus-pink bg-campus-pink/10 border border-campus-pink/30 px-2 py-0.5 rounded-md">
-          <ShieldAlert className="w-3 h-3" />
-          Safety Risk
-        </span>
-      );
-    }
-    if (post.severity === 2) {
-      return (
-        <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider text-campus-amber bg-campus-amber/10 border border-campus-amber/30 px-2 py-0.5 rounded-md">
-          Disruptive
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center text-[10px] font-medium text-slate-400 bg-slate-800/80 px-1.5 py-0.5 rounded-md">
-        Minor
-      </span>
-    );
-  };
-
-  const timeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  };
+  const isEscalated = post.agree_count >= 100 && post.status !== 'resolved';
+  const isSolved = post.status === 'resolved';
 
   return (
-    <article className="glass-card rounded-2xl p-4 sm:p-5 transition-all hover:border-slate-600 hover:shadow-lg relative overflow-hidden group">
-      {/* Safety Risk Ambient Top Glow */}
-      {post.safety_risk && (
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-campus-pink via-red-500 to-campus-amber"></div>
-      )}
+    <div
+      className={`bg-white dark:bg-slate-800/90 rounded-[2rem] border-2 transition-all duration-300 p-6 sm:p-8 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start fade-in ${
+        isEscalated
+          ? 'border-red-300 dark:border-red-800 shadow-xl shadow-red-500/10'
+          : 'border-slate-200/80 dark:border-slate-700/80 hover:border-slate-300 dark:hover:border-slate-600 shadow-sm hover:shadow-md'
+      }`}
+    >
+      {/* Voting Column */}
+      <div className="flex sm:flex-col items-center justify-between sm:justify-start bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-2 shrink-0 w-full sm:w-16 shadow-inner">
+        <button
+          onClick={() => vote(post.id, 1)}
+          disabled={isSolved}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+            post.user_vote === 1
+              ? 'text-teal-600 bg-teal-100 dark:bg-teal-900/60 dark:text-teal-300 shadow-sm'
+              : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white'
+          } ${isSolved ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}`}
+          title="Upvote / Agree"
+          aria-label="Upvote"
+        >
+          <ChevronUp className="w-6 h-6 stroke-[2.5]" />
+        </button>
 
-      <div className="flex items-start gap-4">
-        {/* Left Vote Rail */}
-        {showVoteRail && (
-          <div className="flex flex-col items-center bg-campus-bg/70 border border-campus-border rounded-xl p-1 sm:p-1.5 min-w-[48px] self-start select-none">
-            <button
-              onClick={() => upvotePost(post.id)}
-              className={`p-1.5 rounded-lg transition-all ${
-                post.user_vote === 1
-                  ? 'bg-campus-teal text-campus-bg shadow-glow'
-                  : 'text-slate-400 hover:text-campus-teal hover:bg-campus-teal/10'
-              }`}
-              title="Agree / Upvote"
-              aria-label="Upvote"
-            >
-              <ChevronUp className="w-5 h-5 stroke-[2.5]" />
-            </button>
+        <span
+          className={`text-base font-extrabold py-2 sm:py-3.5 tabular-nums ${
+            isEscalated
+              ? 'text-red-600 dark:text-red-400'
+              : 'text-slate-800 dark:text-slate-100'
+          }`}
+        >
+          {post.agree_count}
+        </span>
 
-            <span
-              className={`text-xs sm:text-sm font-extrabold my-1 tabular-nums ${
-                post.user_vote === 1
-                  ? 'text-campus-teal'
-                  : post.user_vote === -1
-                  ? 'text-campus-pink'
-                  : 'text-slate-200'
-              }`}
-            >
-              {post.net_votes ?? post.agree_count - post.disagree_count}
+        <button
+          onClick={() => vote(post.id, -1)}
+          disabled={isSolved}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+            post.user_vote === -1
+              ? 'text-amber-600 bg-amber-100 dark:bg-amber-900/60 dark:text-amber-300 shadow-sm'
+              : 'text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white'
+          } ${isSolved ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}`}
+          title="Downvote"
+          aria-label="Downvote"
+        >
+          <ChevronDown className="w-6 h-6 stroke-[2.5]" />
+        </button>
+      </div>
+
+      {/* Main Post Content */}
+      <div className="flex-1 w-full min-w-0 pt-0.5 space-y-3.5">
+        {/* Category & Location Badges */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {post.kind === 'grievance' ? (
+            <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800 shadow-sm inline-flex items-center gap-1.5">
+              <Wrench className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>Fix It</span>
             </span>
+          ) : (
+            <span className="bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 text-xs font-bold px-3 py-1.5 rounded-lg border border-teal-200 dark:border-teal-800 shadow-sm inline-flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 stroke-[3]" />
+              <span>Add It</span>
+            </span>
+          )}
 
-            <button
-              onClick={() => downvotePost(post.id)}
-              className={`p-1.5 rounded-lg transition-all ${
-                post.user_vote === -1
-                  ? 'bg-campus-pink text-campus-bg shadow-sm'
-                  : 'text-slate-400 hover:text-campus-pink hover:bg-campus-pink/10'
-              }`}
-              title="Disagree / Downvote"
-              aria-label="Downvote"
-            >
-              <ChevronDown className="w-5 h-5 stroke-[2.5]" />
-            </button>
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 shadow-sm">
+            <MapPin className="w-3.5 h-3.5 text-slate-400" />
+            <span>{post.location_name || post.location?.name || 'Campus Grounds'}</span>
+          </span>
+
+          {post.department && (
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 hidden sm:inline-flex items-center gap-1 ml-auto">
+              <Building2 className="w-3.5 h-3.5 text-slate-400" />
+              <span>{post.department}</span>
+            </span>
+          )}
+        </div>
+
+        {/* Title */}
+        <Link href={`/post/${post.id}`} className="block group">
+          <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors leading-snug tracking-tight">
+            {post.title}
+          </h3>
+        </Link>
+
+        {/* Description */}
+        {post.description && (
+          <p className="text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed font-medium">
+            {post.description}
+          </p>
+        )}
+
+        {/* Photos Preview */}
+        {post.photos && post.photos.length > 0 && (
+          <div className="pt-1 flex items-center gap-3">
+            {post.photos.slice(0, 2).map((photo, i) => (
+              <div
+                key={i}
+                className="w-24 h-16 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900"
+              >
+                <img
+                  src={photo}
+                  alt={post.title}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform"
+                />
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Post Content */}
-        <div className="flex-1 min-w-0">
-          {/* Metadata Row */}
-          <div className="flex flex-wrap items-center gap-2 mb-2">
-            {getStatusBadge()}
-            {getSeverityBadge()}
-            
-            <span className="text-[11px] font-medium text-slate-400 bg-campus-surface border border-campus-border px-2 py-0.5 rounded-md flex items-center gap-1">
-              <Building2 className="w-3 h-3 text-slate-400" />
-              {post.department}
-            </span>
+        {/* Escalation Alert Banner (Triggered when 100+ votes hit!) */}
+        {isEscalated && (
+          <div className="bg-red-50/90 dark:bg-red-950/40 border border-red-200 dark:border-red-800 rounded-2xl p-4 flex items-start sm:items-center gap-4 fade-in shadow-sm relative overflow-hidden">
+            <div className="bg-red-500 text-white w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30 pulse-red">
+              <Bell className="w-5 h-5 animate-pulse" />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold text-red-900 dark:text-red-300 uppercase tracking-widest mb-0.5">
+                Escalated (100+ Votes)
+              </p>
+              <p className="text-xs text-red-700 dark:text-red-400 font-semibold">
+                Admin notified. Automated reminders trigger every 24 hours.
+              </p>
+            </div>
+          </div>
+        )}
 
-            {post.location && (
-              <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1 ml-auto">
-                <MapPin className="w-3 h-3 text-campus-teal" />
-                {post.location.name}
+        {/* Solved Card View with Admin Remarks */}
+        {isSolved ? (
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 rounded-2xl p-5 border-2 border-emerald-100 dark:border-emerald-800 w-full fade-in shadow-sm space-y-3">
+            <div className="flex items-center text-emerald-800 dark:text-emerald-300 font-extrabold text-base">
+              <div className="w-7 h-7 bg-emerald-200 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 rounded-full flex items-center justify-center mr-2.5">
+                <Check className="w-4 h-4 stroke-[3]" />
+              </div>
+              <span>Officially Resolved</span>
+            </div>
+
+            <div className="bg-white dark:bg-slate-800/90 px-5 py-4 rounded-xl border border-emerald-100 dark:border-emerald-800 shadow-sm relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-400"></div>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold uppercase text-[10px] tracking-widest block mb-1">
+                Admin Remarks
+              </span>
+              <p className="text-slate-700 dark:text-slate-200 text-sm font-medium leading-relaxed">
+                {post.admin_note || 'Issue addressed by campus administration on site.'}
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Footer Meta & Admin Action Buttons */
+          <div className="flex flex-wrap items-center justify-between border-t border-slate-100 dark:border-slate-700/80 pt-4 gap-4">
+            <div className="flex items-center text-xs font-bold text-slate-400">
+              <Clock className="w-3.5 h-3.5 mr-1.5" />
+              <span>Reported {post.author_name ? `by ${post.author_name}` : 'recently'}</span>
+            </div>
+
+            {isAdmin ? (
+              <button
+                onClick={() => onResolveClick?.(post.id)}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 transition-all flex items-center gap-2 active:scale-95 ml-auto"
+              >
+                <CheckCheck className="w-4 h-4" />
+                <span>Admin: Mark Resolved</span>
+              </button>
+            ) : (
+              <span className="text-xs font-extrabold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 px-3.5 py-1.5 rounded-xl border border-indigo-100 dark:border-indigo-800 uppercase tracking-widest shadow-sm">
+                Under Review
               </span>
             )}
           </div>
-
-          {/* Title */}
-          <Link href={`/post/${post.id}`} className="block group-hover:text-campus-teal transition-colors">
-            <h3 className="text-base sm:text-lg font-bold text-white leading-snug tracking-tight">
-              {post.title}
-            </h3>
-          </Link>
-
-          {/* Description */}
-          {post.description && (
-            <p className="text-xs sm:text-sm text-slate-300 line-clamp-2 mt-1.5 leading-relaxed font-sans">
-              {post.description}
-            </p>
-          )}
-
-          {/* Photos Preview */}
-          {post.photos && post.photos.length > 0 && (
-            <div className="mt-3 flex items-center gap-2">
-              {post.photos.slice(0, 2).map((photo, i) => (
-                <div
-                  key={i}
-                  className="w-20 h-14 rounded-lg overflow-hidden border border-campus-border bg-slate-900 flex-shrink-0"
-                >
-                  <img
-                    src={photo}
-                    alt={post.title}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-              {post.ai_meta?.confidence && (
-                <span className="text-[10px] text-slate-400 flex items-center gap-1 bg-campus-surface/80 border border-campus-border px-2 py-1 rounded-md">
-                  <Sparkles className="w-3 h-3 text-campus-teal" />
-                  AI Triage: {Math.round(post.ai_meta.confidence * 100)}% Match
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Verification Banner if Awaiting Student Consensus */}
-          {post.status === 'awaiting_verification' && (
-            <div className="mt-3.5 p-3 rounded-xl bg-purple-950/40 border border-purple-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-purple-400 flex-shrink-0" />
-                <div>
-                  <p className="text-xs font-bold text-purple-200">
-                    Admin claims this issue is resolved. Have you checked it on site?
-                  </p>
-                  <p className="text-[10px] text-purple-300/80">
-                    Needs 5 student confirmations to enter Solved Archive.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <button
-                  onClick={() => verifyPost(post.id, true)}
-                  className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold transition-all shadow-sm"
-                >
-                  Yes, It&apos;s Fixed
-                </button>
-                <button
-                  onClick={() => verifyPost(post.id, false)}
-                  className="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-bold transition-all"
-                >
-                  No, Still Broken
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Footer Card Telemetry */}
-          <div className="mt-3.5 pt-3 border-t border-campus-border/60 flex items-center justify-between text-xs text-slate-400">
-            <div className="flex items-center gap-3">
-              <span className="font-medium text-slate-300">
-                {post.anonymous ? '🔒 Anonymous Student' : post.author_name || 'Student'}
-              </span>
-              <span>•</span>
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {timeAgo(post.created_at)}
-              </span>
-            </div>
-
-            {/* Impact Badge */}
-            <div
-              className="flex items-center gap-1.5 bg-campus-bg/80 border border-campus-border px-2.5 py-1 rounded-lg text-slate-200 cursor-help"
-              title="Impact Score = Net Votes × Severity Multiplier + Age Factor + Safety Risk Bump"
-            >
-              <Flame className="w-3.5 h-3.5 text-campus-amber fill-campus-amber/20" />
-              <span className="font-bold text-xs tabular-nums text-campus-amber">
-                {post.impact_score?.toFixed(1) || '0.0'}
-              </span>
-              <span className="text-[10px] text-slate-400 font-sans hidden sm:inline">Impact</span>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
-    </article>
+    </div>
   );
 }
