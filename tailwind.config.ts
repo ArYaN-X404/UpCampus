@@ -10,34 +10,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        campus: {
-          bg: "#0A1330",
-          surface: "#121F4A",
-          elevated: "#1A2B66",
-          border: "#22305F",
-          teal: "#2DD4BF",
-          amber: "#FBBF24",
-          pink: "#F472B6",
-        },
-        status: {
-          review: "#64748B",
-          progress: "#F59E0B",
-          awaiting: "#A855F7",
-          resolved: "#10B981",
-          reopened: "#EF4444",
-        },
+        // Authoritative UpCampus Palette
+        deepNavy: "#0B1530",       // Main background
+        darkBlue: "#142747",       // Cards and panels
+        skyBlue: "#8CCBFF",        // Light blue accent
+        mintGreen: "#A7E8C3",      // Light green accent
+        softWhite: "#F7FAFF",      // Main text
+        paleBlueGrey: "#B7C6D9",   // Secondary text
+        freshGreen: "#38C982",     // Primary buttons
+        freshGreenHover: "#2EB874",
       },
       fontFamily: {
-        heading: ["var(--font-dm-serif)", "serif"],
-        sans: ["var(--font-manrope)", "system-ui", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        glow: "0 0 25px -5px rgba(45, 212, 191, 0.25)",
-        amberGlow: "0 0 25px -5px rgba(251, 191, 36, 0.25)",
+        glass: "inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 36px -8px rgba(3, 7, 18, 0.5)",
+        glassGlow: "0 0 25px -4px rgba(140, 203, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.12)",
+        greenGlow: "0 0 25px -4px rgba(56, 201, 130, 0.35)",
+        mintGlow: "0 0 20px -4px rgba(167, 232, 195, 0.25)",
       },
     },
   },
   plugins: [],
 };
-export default config;
 
+export default config;

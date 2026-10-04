@@ -76,50 +76,50 @@ export default function PostDetailPage() {
       {/* Back button */}
       <button
         onClick={() => router.push('/')}
-        className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+        className="flex items-center gap-1.5 text-xs font-semibold text-paleBlueGrey hover:text-softWhite transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4 text-skyBlue" />
         <span>Back to Campus Feed</span>
       </button>
 
       {/* Main Post Container */}
-      <div className="glass-card rounded-3xl p-6 sm:p-8 space-y-6 border border-campus-border">
+      <div className="glass-card rounded-3xl p-6 sm:p-8 space-y-6 border border-paleBlueGrey/20">
         {/* Top Badges */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-campus-border">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-paleBlueGrey/15">
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-campus-teal/20 text-campus-teal border border-campus-teal/40">
+            <span className="badge-sky px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
               {post.category}
             </span>
             {post.safety_risk && (
-              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-campus-pink/20 text-campus-pink border border-campus-pink/40 flex items-center gap-1">
+              <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-950/60 text-red-400 border border-red-500/40 flex items-center gap-1">
                 <ShieldAlert className="w-3.5 h-3.5" />
                 Safety Risk
               </span>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-            <Clock className="w-3.5 h-3.5" />
-            <span>Reported 3 days ago</span>
+          <div className="flex items-center gap-1.5 text-xs text-paleBlueGrey">
+            <Clock className="w-3.5 h-3.5 text-skyBlue" />
+            <span>Reported recently</span>
           </div>
         </div>
 
         {/* Title & Author */}
         <div className="space-y-2">
-          <h1 className="text-xl sm:text-3xl font-heading font-extrabold text-white leading-tight">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-softWhite leading-tight">
             {post.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400">
-            <span>Posted by: <strong className="text-slate-200">{post.anonymous ? '🔒 Anonymous Student' : post.author_name}</strong></span>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-paleBlueGrey">
+            <span>Posted by: <strong className="text-softWhite">{post.anonymous ? '🔒 Anonymous Student' : post.author_name}</strong></span>
             <span>•</span>
             <span className="flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-campus-teal" />
-              {post.location?.name || 'Campus'}
+              <MapPin className="w-3.5 h-3.5 text-skyBlue" />
+              {post.location_name || post.location?.name || 'Campus Grounds'}
             </span>
             <span>•</span>
             <span className="flex items-center gap-1">
-              <Building2 className="w-3.5 h-3.5 text-campus-amber" />
+              <Building2 className="w-3.5 h-3.5 text-mintGreen" />
               Dept: {post.department}
             </span>
           </div>
@@ -127,52 +127,52 @@ export default function PostDetailPage() {
 
         {/* Big Photo Preview */}
         {post.photos && post.photos.length > 0 && (
-          <div className="rounded-2xl overflow-hidden border border-campus-border max-h-96 bg-slate-900">
+          <div className="rounded-2xl overflow-hidden border border-paleBlueGrey/20 max-h-96 bg-deepNavy shadow-inner">
             <img src={post.photos[0]} alt={post.title} className="w-full h-full object-cover" />
           </div>
         )}
 
         {/* Description */}
         {post.description && (
-          <div className="p-4 rounded-2xl bg-campus-bg/70 border border-campus-border text-sm text-slate-200 leading-relaxed font-sans">
+          <div className="p-4 rounded-2xl bg-deepNavy/80 border border-paleBlueGrey/15 text-sm text-softWhite leading-relaxed font-sans font-medium">
             {post.description}
           </div>
         )}
 
         {/* Pinned Official Remark */}
-        <div className="p-4 rounded-2xl bg-campus-amber/10 border border-campus-amber/30 space-y-1.5">
-          <div className="flex items-center gap-2 text-campus-amber text-xs font-bold uppercase tracking-wider">
-            <Pin className="w-4 h-4 fill-campus-amber" />
+        <div className="p-4 rounded-2xl bg-darkBlue/80 border border-mintGreen/30 space-y-1.5">
+          <div className="flex items-center gap-2 text-mintGreen text-xs font-bold uppercase tracking-wider">
+            <Pin className="w-4 h-4 fill-mintGreen" />
             <span>Pinned Official Administrative Remark</span>
           </div>
-          <p className="text-xs sm:text-sm text-amber-100 italic leading-relaxed">
-            &quot;Work order issued to facility electrical contractor. High-lumen weather-proof LED fittings arriving tomorrow morning.&quot;
+          <p className="text-xs sm:text-sm text-softWhite italic leading-relaxed">
+            {post.admin_note || '"Work order issued to facility maintenance team. Vendor inspecting fixtures on site."'}
           </p>
-          <span className="text-[10px] text-amber-300/80 block pt-1">
-            — Dr. V. Ramanathan, Estate Office Head • Yesterday at 4:15 PM
+          <span className="text-[10px] text-mintGreen/80 block pt-1">
+            — Campus Administration • Recorded on Ledger
           </span>
         </div>
 
         {/* Community Verification Prompt if Awaiting */}
         {post.status === 'awaiting_verification' && (
-          <div className="p-5 rounded-2xl bg-purple-950/50 border border-purple-500/50 space-y-3">
-            <div className="flex items-center gap-2 text-purple-200 font-bold text-sm">
-              <CheckCircle2 className="w-5 h-5 text-purple-400" />
+          <div className="p-5 rounded-2xl badge-mint border border-mintGreen/40 space-y-3">
+            <div className="flex items-center gap-2 text-mintGreen font-bold text-sm">
+              <CheckCircle2 className="w-5 h-5 text-mintGreen" />
               <span>Admin marked this issue as Solved. Does reality on campus match?</span>
             </div>
-            <p className="text-xs text-purple-300/80">
+            <p className="text-xs text-paleBlueGrey">
               Your physical verification vote holds the administration accountable. 5 confirmations move this to the permanent Solved Archive.
             </p>
             <div className="flex items-center gap-3 pt-1">
               <button
                 onClick={() => verifyPost(post.id, true)}
-                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl shadow-glow transition-all"
+                className="btn-fresh-green text-deepNavy font-extrabold text-xs px-4 py-2 rounded-xl shadow-lg transition-all"
               >
                 Yes, Verified Fixed On-Site
               </button>
               <button
                 onClick={() => verifyPost(post.id, false)}
-                className="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 font-bold text-xs rounded-xl transition-all"
+                className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 font-bold text-xs rounded-xl transition-all"
               >
                 No, Still Broken
               </button>
@@ -181,15 +181,15 @@ export default function PostDetailPage() {
         )}
 
         {/* Voting & Impact Bar */}
-        <div className="p-4 rounded-2xl bg-campus-surface border border-campus-border flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="p-4 rounded-2xl bg-deepNavy/80 border border-paleBlueGrey/15 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center bg-campus-bg border border-campus-border rounded-xl p-1">
+            <div className="flex items-center bg-darkBlue border border-paleBlueGrey/20 rounded-xl p-1 shadow-inner">
               <button
                 onClick={() => upvotePost(post.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                   post.user_vote === 1
-                    ? 'bg-campus-teal text-campus-bg shadow-glow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'badge-sky text-skyBlue shadow-sm'
+                    : 'text-paleBlueGrey hover:text-softWhite'
                 }`}
               >
                 <ChevronUp className="w-4 h-4 stroke-[3]" />
@@ -199,8 +199,8 @@ export default function PostDetailPage() {
                 onClick={() => downvotePost(post.id)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all ${
                   post.user_vote === -1
-                    ? 'bg-campus-pink text-campus-bg shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40 shadow-sm'
+                    : 'text-paleBlueGrey hover:text-softWhite'
                 }`}
               >
                 <ChevronDown className="w-4 h-4 stroke-[3]" />
@@ -210,55 +210,55 @@ export default function PostDetailPage() {
           </div>
 
           <div className="flex items-center gap-2 text-xs">
-            <Flame className="w-4 h-4 text-campus-amber fill-campus-amber" />
-            <span className="font-bold text-white">Impact Score: {post.impact_score?.toFixed(1)}</span>
-            <span className="text-slate-400 text-[11px]">(Ranked #{post.impact_score && post.impact_score > 100 ? '1' : '3'} on campus)</span>
+            <Flame className="w-4 h-4 text-amber-400 fill-amber-400/20" />
+            <span className="font-bold text-softWhite">Impact Score: {post.impact_score?.toFixed(1)}</span>
+            <span className="text-paleBlueGrey text-[11px]">(Ranked #{post.impact_score && post.impact_score > 100 ? '1' : '3'} on campus)</span>
           </div>
         </div>
 
         {/* Public Status Timeline */}
-        <div className="space-y-4 pt-4 border-t border-campus-border">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300">
+        <div className="space-y-4 pt-4 border-t border-paleBlueGrey/15">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-paleBlueGrey">
             Public Resolution Timeline & Ledger
           </h3>
 
-          <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-campus-border">
+          <div className="space-y-4 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-paleBlueGrey/20">
             <div className="flex items-start gap-4 relative">
-              <div className="w-6 h-6 rounded-full bg-campus-teal/20 text-campus-teal border border-campus-teal flex items-center justify-center flex-shrink-0 z-10">
-                <span className="w-2 h-2 rounded-full bg-campus-teal"></span>
+              <div className="w-6 h-6 rounded-full badge-sky flex items-center justify-center flex-shrink-0 z-10 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-skyBlue"></span>
               </div>
               <div className="space-y-0.5">
-                <span className="text-xs font-bold text-white block">Submitted by Student with Photo Evidence</span>
-                <span className="text-[11px] text-slate-400 block">AI Triage tagged Electrical Maintenance • 3 days ago</span>
+                <span className="text-xs font-bold text-softWhite block">Submitted by Student with Photo Evidence</span>
+                <span className="text-[11px] text-paleBlueGrey block">AI Triage tagged {post.department} • 3 days ago</span>
               </div>
             </div>
 
             <div className="flex items-start gap-4 relative">
-              <div className="w-6 h-6 rounded-full bg-campus-amber/20 text-campus-amber border border-campus-amber flex items-center justify-center flex-shrink-0 z-10">
-                <span className="w-2 h-2 rounded-full bg-campus-amber"></span>
+              <div className="w-6 h-6 rounded-full badge-mint flex items-center justify-center flex-shrink-0 z-10 shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-mintGreen"></span>
               </div>
               <div className="space-y-0.5">
-                <span className="text-xs font-bold text-white block">Approved by Student Supervisor Priya P.</span>
-                <span className="text-[11px] text-slate-400 block">Passed fraud & duplicate screening • Published to vote-ranking feed</span>
+                <span className="text-xs font-bold text-softWhite block">Approved by Student Supervisor Priya P.</span>
+                <span className="text-[11px] text-paleBlueGrey block">Passed fraud & duplicate screening • Published to vote-ranking feed</span>
               </div>
             </div>
 
             <div className="flex items-start gap-4 relative">
-              <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 border border-purple-500 flex items-center justify-center flex-shrink-0 z-10">
-                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></span>
+              <div className="w-6 h-6 rounded-full bg-skyBlue/20 text-skyBlue border border-skyBlue/40 flex items-center justify-center flex-shrink-0 z-10">
+                <span className="w-2 h-2 rounded-full bg-skyBlue animate-pulse"></span>
               </div>
               <div className="space-y-0.5">
-                <span className="text-xs font-bold text-white block">Status Updated to In Progress</span>
-                <span className="text-[11px] text-slate-400 block">Estate Office issued Work Order #EL-409 • 1 day ago</span>
+                <span className="text-xs font-bold text-softWhite block">Status Updated to In Progress</span>
+                <span className="text-[11px] text-paleBlueGrey block">Estate Office issued Work Order • 1 day ago</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Discussion Comments */}
-        <div className="space-y-4 pt-6 border-t border-campus-border">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-300">
-            <MessageSquare className="w-4 h-4 text-campus-teal" />
+        <div className="space-y-4 pt-6 border-t border-paleBlueGrey/15">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-paleBlueGrey">
+            <MessageSquare className="w-4 h-4 text-skyBlue" />
             <span>Student Discussion ({localComments.length})</span>
           </div>
 
@@ -268,11 +268,11 @@ export default function PostDetailPage() {
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               placeholder="Add on-site update or question..."
-              className="flex-1 bg-campus-bg border border-campus-border rounded-xl px-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-campus-teal"
+              className="flex-1 bg-deepNavy/80 border border-paleBlueGrey/25 rounded-xl px-4 py-2 text-xs text-softWhite placeholder-paleBlueGrey/50 focus:outline-none focus:border-skyBlue shadow-inner"
             />
             <button
               type="submit"
-              className="px-4 py-2 bg-campus-teal hover:bg-teal-300 text-campus-bg font-bold text-xs rounded-xl shadow-glow transition-all flex items-center gap-1"
+              className="btn-fresh-green text-deepNavy font-extrabold text-xs px-4 py-2 rounded-xl shadow-md transition-all flex items-center gap-1 active:scale-95"
             >
               <Send className="w-3.5 h-3.5" />
               <span>Post</span>
@@ -281,12 +281,12 @@ export default function PostDetailPage() {
 
           <div className="space-y-2.5">
             {localComments.map((c) => (
-              <div key={c.id} className="p-3 rounded-xl bg-campus-bg/60 border border-campus-border space-y-1">
+              <div key={c.id} className="p-3 rounded-xl bg-deepNavy/60 border border-paleBlueGrey/15 space-y-1">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-bold text-slate-200">{c.author}</span>
-                  <span className="text-slate-500">{c.time}</span>
+                  <span className="font-bold text-softWhite">{c.author}</span>
+                  <span className="text-paleBlueGrey/60">{c.time}</span>
                 </div>
-                <p className="text-xs text-slate-300 leading-relaxed">{c.text}</p>
+                <p className="text-xs text-paleBlueGrey leading-relaxed">{c.text}</p>
               </div>
             ))}
           </div>

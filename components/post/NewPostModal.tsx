@@ -112,24 +112,24 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity fade-in overflow-y-auto">
-      <div className="glass-card rounded-[2rem] max-w-xl w-full p-6 sm:p-8 shadow-2xl relative my-8 modal-enter border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+    <div className="fixed inset-0 bg-deepNavy/80 backdrop-blur-md z-50 flex items-center justify-center p-4 transition-opacity fade-in overflow-y-auto">
+      <div className="glass-card rounded-[2rem] max-w-xl w-full p-6 sm:p-8 shadow-2xl relative my-8 modal-enter border border-paleBlueGrey/20 bg-darkBlue text-softWhite">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 rounded-full w-10 h-10 flex items-center justify-center transition-colors"
+          className="absolute top-6 right-6 text-paleBlueGrey hover:text-softWhite bg-white/5 hover:bg-white/10 rounded-full w-10 h-10 flex items-center justify-center transition-colors border border-paleBlueGrey/10"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Header */}
         <div className="flex items-center gap-4 mb-7">
-          <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950 text-teal-600 dark:text-teal-400 flex items-center justify-center text-xl shadow-sm border border-teal-100 dark:border-teal-800">
+          <div className="w-12 h-12 rounded-2xl bg-skyBlue/15 text-skyBlue flex items-center justify-center text-xl shadow-sm border border-skyBlue/30">
             <PenTool className="w-6 h-6 stroke-[2]" />
           </div>
           <div>
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white">Create Post</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <h3 className="text-2xl font-extrabold text-softWhite">Create Post</h3>
+            <p className="text-xs text-paleBlueGrey mt-1">
               Submit a new request or report a broken facility on campus.
             </p>
           </div>
@@ -138,15 +138,15 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Category Radio Cards */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3">
+            <label className="block text-[11px] font-bold text-paleBlueGrey uppercase tracking-widest mb-3">
               Post Category
             </label>
             <div className="grid grid-cols-2 gap-4">
               <label
                 className={`cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-start gap-1.5 transition-all shadow-sm ${
                   kind === 'grievance'
-                    ? 'border-teal-500 bg-teal-50/70 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200'
-                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-200'
+                    ? 'border-skyBlue bg-skyBlue/15 text-softWhite shadow-glassGlow'
+                    : 'border-paleBlueGrey/15 bg-white/5 hover:bg-white/10 text-paleBlueGrey'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -156,14 +156,14 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
                     value="grievance"
                     checked={kind === 'grievance'}
                     onChange={() => setKind('grievance')}
-                    className="text-teal-600 focus:ring-teal-500 w-4 h-4"
+                    className="text-skyBlue focus:ring-skyBlue w-4 h-4 bg-deepNavy border-paleBlueGrey/30"
                   />
-                  <span className="text-sm font-bold flex items-center gap-1.5">
-                    <Wrench className="w-4 h-4 text-amber-500" />
+                  <span className="text-sm font-bold flex items-center gap-1.5 text-softWhite">
+                    <Wrench className="w-4 h-4 text-skyBlue" />
                     Complaint
                   </span>
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium pl-6">
+                <span className="text-xs text-paleBlueGrey font-medium pl-6">
                   Report broken things (Fix It).
                 </span>
               </label>
@@ -171,8 +171,8 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
               <label
                 className={`cursor-pointer border-2 rounded-2xl p-4 flex flex-col items-start gap-1.5 transition-all shadow-sm ${
                   kind === 'suggestion'
-                    ? 'border-teal-500 bg-teal-50/70 dark:bg-teal-950/40 text-teal-900 dark:text-teal-200'
-                    : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 text-slate-800 dark:text-slate-200'
+                    ? 'border-mintGreen bg-mintGreen/15 text-softWhite shadow-mintGlow'
+                    : 'border-paleBlueGrey/15 bg-white/5 hover:bg-white/10 text-paleBlueGrey'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -182,14 +182,14 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
                     value="suggestion"
                     checked={kind === 'suggestion'}
                     onChange={() => setKind('suggestion')}
-                    className="text-teal-600 focus:ring-teal-500 w-4 h-4"
+                    className="text-mintGreen focus:ring-mintGreen w-4 h-4 bg-deepNavy border-paleBlueGrey/30"
                   />
-                  <span className="text-sm font-bold flex items-center gap-1.5">
-                    <Plus className="w-4 h-4 text-teal-500 stroke-[3]" />
+                  <span className="text-sm font-bold flex items-center gap-1.5 text-softWhite">
+                    <Plus className="w-4 h-4 text-mintGreen stroke-[3]" />
                     Suggestion
                   </span>
                 </div>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium pl-6">
+                <span className="text-xs text-paleBlueGrey font-medium pl-6">
                   Request additions (Add It).
                 </span>
               </label>
@@ -198,11 +198,11 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
 
           {/* Quick Camera Evidence Picker */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+            <div className="flex items-center justify-between text-[11px] font-bold text-paleBlueGrey uppercase tracking-widest">
               <span>Photo Evidence (AI Triage)</span>
               {photoUrl && (
-                <span className="text-teal-600 dark:text-teal-400 flex items-center gap-1 normal-case font-semibold">
-                  <Sparkles className="w-3 h-3" />
+                <span className="text-mintGreen flex items-center gap-1 normal-case font-semibold text-xs">
+                  <Sparkles className="w-3.5 h-3.5" />
                   Auto-Analyzed
                 </span>
               )}
@@ -220,27 +220,27 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
                   onClick={() => handlePhotoSelect(s.url)}
                   className={`p-1.5 rounded-xl border text-center transition-all ${
                     photoUrl === s.url
-                      ? 'border-teal-500 bg-teal-50 dark:bg-teal-950'
-                      : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800'
+                      ? 'border-mintGreen bg-mintGreen/15 shadow-sm'
+                      : 'border-paleBlueGrey/20 bg-deepNavy/70 hover:border-paleBlueGrey/40'
                   }`}
                 >
                   <img src={s.url} alt={s.label} className="w-full h-12 object-cover rounded-lg mb-1" />
-                  <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 block truncate">{s.label}</span>
+                  <span className="text-[10px] font-semibold text-paleBlueGrey block truncate">{s.label}</span>
                 </button>
               ))}
             </div>
 
             {isAnalyzing && (
-              <div className="p-2.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-teal-700 dark:text-teal-300 text-xs flex items-center gap-2 animate-pulse">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>AI inspecting photo context and prefilling details...</span>
+              <div className="p-2.5 rounded-xl badge-sky text-xs flex items-center gap-2 animate-pulse">
+                <Loader2 className="w-4 h-4 animate-spin text-skyBlue" />
+                <span className="text-skyBlue">AI inspecting photo context and prefilling details...</span>
               </div>
             )}
           </div>
 
           {/* Title Input (Triggers Realtime AI Duplicate Checker) */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+            <label className="block text-[11px] font-bold text-paleBlueGrey uppercase tracking-widest mb-2">
               Title
             </label>
             <input
@@ -249,27 +249,27 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Need a vending machine in the library..."
-              className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:border-teal-500 transition-all font-semibold shadow-sm"
+              className="w-full text-sm border border-paleBlueGrey/25 bg-deepNavy/80 text-softWhite placeholder-paleBlueGrey/50 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-skyBlue transition-all font-semibold shadow-inner"
             />
           </div>
 
           {/* AI Duplicate Alert Box matching up_campus_code.html */}
           {matchedPost && (
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/50 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl p-5 shadow-sm fade-in">
+            <div className="bg-skyBlue/10 border border-skyBlue/30 rounded-2xl p-5 shadow-sm fade-in backdrop-blur-md">
               <div className="flex gap-4 items-start">
-                <div className="bg-white dark:bg-slate-800 p-2.5 rounded-xl shadow-sm border border-amber-100 dark:border-amber-700 shrink-0">
-                  <Bot className="w-6 h-6 text-amber-500" />
+                <div className="bg-darkBlue p-2.5 rounded-xl shadow-sm border border-skyBlue/30 shrink-0 text-skyBlue">
+                  <Bot className="w-6 h-6" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-amber-900 dark:text-amber-300 mb-1 flex items-center gap-2">
+                  <h4 className="text-sm font-bold text-skyBlue mb-1 flex items-center gap-2">
                     Wait! Similar Post Found{' '}
-                    <span className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-100 text-[9px] uppercase px-2 py-0.5 rounded-full font-bold">
+                    <span className="badge-sky text-[9px] uppercase px-2 py-0.5 rounded-full font-bold">
                       AI Match
                     </span>
                   </h4>
-                  <p className="text-xs text-amber-700 dark:text-amber-400 mb-3 leading-relaxed">
+                  <p className="text-xs text-paleBlueGrey mb-3 leading-relaxed">
                     Someone already posted:{' '}
-                    <strong className="text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-900/60 px-1.5 py-0.5 rounded">
+                    <strong className="text-softWhite bg-white/10 px-1.5 py-0.5 rounded">
                       &quot;{matchedPost.title}&quot;
                     </strong>
                     <br />
@@ -278,7 +278,7 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
                   <button
                     type="button"
                     onClick={handleUpvoteMatched}
-                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                    className="btn-fresh-green text-deepNavy text-xs font-extrabold px-4 py-2.5 rounded-xl transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
                   >
                     <ArrowUp className="w-4 h-4 stroke-[3]" />
                     <span>Upvote Existing Instead (+{matchedPost.count})</span>
@@ -290,7 +290,7 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
 
           {/* Location Input */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+            <label className="block text-[11px] font-bold text-paleBlueGrey uppercase tracking-widest mb-2">
               Location
             </label>
             <input
@@ -299,13 +299,13 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g., Central Library Ground Floor"
-              className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:border-teal-500 transition-all font-semibold shadow-sm"
+              className="w-full text-sm border border-paleBlueGrey/25 bg-deepNavy/80 text-softWhite placeholder-paleBlueGrey/50 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-skyBlue transition-all font-semibold shadow-inner"
             />
           </div>
 
           {/* Details */}
           <div>
-            <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+            <label className="block text-[11px] font-bold text-paleBlueGrey uppercase tracking-widest mb-2">
               Details
             </label>
             <textarea
@@ -314,22 +314,22 @@ export default function NewPostModal({ isOpen, onClose, defaultType = 'suggestio
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Explain why this needs to be addressed..."
-              className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl px-5 py-3.5 focus:outline-none focus:border-teal-500 transition-all font-medium resize-none shadow-sm"
+              className="w-full text-sm border border-paleBlueGrey/25 bg-deepNavy/80 text-softWhite placeholder-paleBlueGrey/50 rounded-2xl px-5 py-3.5 focus:outline-none focus:border-skyBlue transition-all font-medium resize-none shadow-inner"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end gap-3 pt-4 border-t border-paleBlueGrey/15">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 text-sm font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+              className="px-6 py-3 text-sm font-bold text-paleBlueGrey hover:bg-white/5 rounded-xl transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-8 py-3 text-sm font-bold bg-slate-900 hover:bg-teal-600 text-white dark:bg-teal-500 dark:hover:bg-teal-400 dark:text-slate-950 rounded-xl shadow-lg transition-all active:scale-95"
+              className="btn-fresh-green text-deepNavy px-8 py-3 text-sm font-extrabold rounded-xl shadow-lg transition-all active:scale-95"
             >
               Publish Post
             </button>

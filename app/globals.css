@@ -3,104 +3,123 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f1f5f9;
-  --surface: #ffffff;
-  --surface2: #f8fafc;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
-  --faint: #94a3b8;
-  --accent: #0d9488;
-  --accent-soft: #ccfbf1;
-  --accent-ink: #0f766e;
-  --amber-bg: #fef3c7;
-  --amber-ink: #92400e;
-  --amber-bd: #fde68a;
-  --teal-bg: #f0fdfa;
-  --teal-ink: #0f766e;
-  --teal-bd: #99f6e4;
-  --red-bg: #fef2f2;
-  --red-ink: #b91c1c;
-  --red-bd: #fecaca;
-  --red: #ef4444;
-  --green-bg: #ecfdf5;
-  --green-ink: #047857;
-  --green-bd: #a7f3d0;
-  --btn: #0f172a;
-  --btn-text: #ffffff;
-  --btn-hover: #1e293b;
-  --nav: rgba(255, 255, 255, 0.85);
-  --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
-  --hero-from: #0f172a;
-  --hero-via: #1e293b;
-  --hero-to: #115e59;
-}
+  /* Exact User-Defined Color Palette */
+  --bg-deep-navy: #0B1530;
+  --panel-dark-blue: #142747;
+  --accent-sky-blue: #8CCBFF;
+  --accent-mint-green: #A7E8C3;
+  --text-soft-white: #F7FAFF;
+  --text-pale-blue-grey: #B7C6D9;
+  --btn-fresh-green: #38C982;
+  --btn-fresh-green-hover: #2EB874;
 
-.dark {
-  --bg: #0a1020;
-  --surface: #111a2e;
-  --surface2: #16213a;
-  --border: #243049;
-  --text: #e7edf7;
-  --muted: #9aa8bf;
-  --faint: #6b7a93;
-  --accent: #2dd4bf;
-  --accent-soft: #134e4a;
-  --accent-ink: #5eead4;
-  --amber-bg: #3b2a0a;
-  --amber-ink: #fcd34d;
-  --amber-bd: #5c430f;
-  --teal-bg: #0b2f2d;
-  --teal-ink: #5eead4;
-  --teal-bd: #14534f;
-  --red-bg: #3a1316;
-  --red-ink: #fca5a5;
-  --red-bd: #6b1f26;
-  --red: #f87171;
-  --green-bg: #0b2e22;
-  --green-ink: #6ee7b7;
-  --green-bd: #14573f;
-  --btn: #e7edf7;
-  --btn-text: #0a1020;
-  --btn-hover: #ffffff;
-  --nav: rgba(10, 16, 32, 0.85);
-  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 10px 28px -10px rgba(0, 0, 0, 0.6);
-  --hero-from: #0b1326;
-  --hero-via: #111d37;
-  --hero-to: #0f3f3c;
+  --border-glass: rgba(183, 198, 217, 0.12);
+  --border-glass-hover: rgba(140, 203, 255, 0.35);
+
+  --mint-glass-bg: rgba(167, 232, 195, 0.12);
+  --mint-glass-border: rgba(167, 232, 195, 0.28);
+  --mint-glass-text: #A7E8C3;
+
+  --sky-glass-bg: rgba(140, 203, 255, 0.12);
+  --sky-glass-border: rgba(140, 203, 255, 0.28);
+  --sky-glass-text: #8CCBFF;
 }
 
 body {
-  color: var(--text);
-  background-color: var(--bg);
+  color: var(--text-soft-white);
+  background-color: var(--bg-deep-navy);
+  background-image: 
+    radial-gradient(1100px 650px at 0% -10%, rgba(140, 203, 255, 0.10), transparent 50%),
+    radial-gradient(1000px 550px at 100% 5%, rgba(167, 232, 195, 0.07), transparent 50%),
+    radial-gradient(1200px 700px at 50% 100%, rgba(20, 39, 71, 0.45), transparent 60%),
+    linear-gradient(180deg, #0B1530 0%, #091126 100%);
+  background-attachment: fixed;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
-/* Glassmorphism navigation & cards */
+/* Frosted Glass Navigation */
 .glass-nav {
-  background: var(--nav);
+  background: rgba(11, 21, 48, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(183, 198, 217, 0.12);
+}
+
+/* Frosted Glass Cards (Dark Blue surface with subtle highlight) */
+.glass-card {
+  background: rgba(20, 39, 71, 0.72);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+  border: 1px solid var(--border-glass);
+  box-shadow: inset 0 1px 0 rgba(247, 250, 255, 0.06), 0 14px 36px -10px rgba(3, 7, 18, 0.55);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-card {
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  box-shadow: var(--shadow);
+.glass-card:hover {
+  border-color: var(--border-glass-hover);
+  box-shadow: inset 0 1px 0 rgba(247, 250, 255, 0.10), 0 18px 44px -8px rgba(3, 7, 18, 0.65), 0 0 20px -4px rgba(140, 203, 255, 0.18);
 }
 
-/* Animations from up_campus_code.html */
+/* Subtle Card Glow Top Accent Line */
+.card-glow-top {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-glow-top::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1.5px;
+  background: linear-gradient(90deg, transparent, rgba(140, 203, 255, 0.6), rgba(167, 232, 195, 0.5), transparent);
+}
+
+/* Light Glass Mint Green Badges */
+.badge-mint {
+  background: var(--mint-glass-bg);
+  border: 1px solid var(--mint-glass-border);
+  color: var(--mint-glass-text);
+  backdrop-filter: blur(8px);
+}
+
+/* Light Glass Sky Blue Badges */
+.badge-sky {
+  background: var(--sky-glass-bg);
+  border: 1px solid var(--sky-glass-border);
+  color: var(--sky-glass-text);
+  backdrop-filter: blur(8px);
+}
+
+/* Primary Fresh Green Button Glow */
+.btn-fresh-green {
+  background-color: var(--btn-fresh-green);
+  color: #0B1530;
+  font-weight: 700;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 16px -2px rgba(56, 201, 130, 0.35);
+}
+
+.btn-fresh-green:hover {
+  background-color: var(--btn-fresh-green-hover);
+  box-shadow: 0 6px 22px -2px rgba(56, 201, 130, 0.45);
+  transform: translateY(-1px);
+}
+
+.btn-fresh-green:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.fade-in { animation: fadeIn 0.3s ease-out forwards; }
+.fade-in { animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
 @keyframes modalEnter {
-  from { opacity: 0; transform: scale(0.94); }
+  from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 .modal-enter { animation: modalEnter 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
@@ -121,17 +140,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: rgba(183, 198, 217, 0.18);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--faint);
+  background: rgba(140, 203, 255, 0.4);
 }
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-
-

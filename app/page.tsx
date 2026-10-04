@@ -92,22 +92,22 @@ export default function FeedPage() {
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* Hero Banner matching up_campus_code.html */}
-      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-teal-900 rounded-[2rem] p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
+      <section className="bg-gradient-to-br from-deepNavy via-darkBlue to-[#0e3158] rounded-[2rem] p-8 sm:p-12 text-softWhite shadow-2xl relative overflow-hidden border border-paleBlueGrey/20 card-glow-top">
         {/* Subtle Watermark Icon */}
         <div className="absolute top-0 right-0 opacity-5 text-[16rem] -mt-16 -mr-16 pointer-events-none transform rotate-12">
           <GraduationCap className="w-80 h-80 text-white" />
         </div>
 
         <div className="relative z-10 space-y-4">
-          <span className="bg-teal-500/20 text-teal-300 border border-teal-500/30 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest inline-block backdrop-blur-sm">
+          <span className="badge-sky text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-widest inline-block shadow-sm">
             Student Governance OS
           </span>
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-tight text-softWhite">
             Fix what&apos;s broken. <br className="hidden sm:block" /> Build what&apos;s missing.
           </h1>
-          <p className="text-slate-300 text-sm sm:text-base md:text-lg max-w-2xl leading-relaxed font-light">
+          <p className="text-paleBlueGrey text-sm sm:text-base md:text-lg max-w-2xl leading-relaxed font-light">
             Report issues or suggest amenities. Posts that hit{' '}
-            <strong className="text-white bg-slate-700/60 px-2 py-0.5 rounded font-bold">
+            <strong className="text-softWhite bg-white/10 px-2 py-0.5 rounded font-bold border border-white/20">
               100+ votes
             </strong>{' '}
             trigger an automated escalation protocol to campus administration.
@@ -116,14 +116,14 @@ export default function FeedPage() {
           <div className="pt-2 flex flex-wrap gap-3">
             <button
               onClick={() => setIsPostModalOpen(true)}
-              className="bg-white hover:bg-slate-100 text-slate-900 font-bold px-5 py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs sm:text-sm flex items-center gap-2"
+              className="btn-fresh-green text-deepNavy font-extrabold px-5 py-3 rounded-xl transition-all shadow-md active:scale-95 text-xs sm:text-sm flex items-center gap-2"
             >
-              <Camera className="w-4 h-4 text-teal-600" />
+              <Camera className="w-4 h-4 text-deepNavy stroke-[2.5]" />
               <span>Report with photo</span>
             </button>
             <button
               onClick={() => setCurrentTab('complaint')}
-              className="bg-white/10 hover:bg-white/20 text-white font-bold px-5 py-3 rounded-xl border border-white/20 transition-all text-xs sm:text-sm"
+              className="bg-white/5 hover:bg-white/10 text-softWhite font-bold px-5 py-3 rounded-xl border border-paleBlueGrey/25 transition-all text-xs sm:text-sm"
             >
               Browse issues
             </button>
@@ -133,11 +133,11 @@ export default function FeedPage() {
 
       {/* Admin Mode Alert Notice if Active */}
       {isAdmin && (
-        <div className="bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex items-center gap-3 text-emerald-800 dark:text-emerald-200 text-xs sm:text-sm font-semibold shadow-sm fade-in">
-          <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
-          <span>
-            <strong>Admin View Active:</strong> You can click{' '}
-            <span className="bg-emerald-500 text-white px-2 py-0.5 rounded font-bold">
+        <div className="badge-mint rounded-2xl p-4 flex items-center gap-3 text-xs sm:text-sm font-semibold shadow-sm fade-in">
+          <ShieldCheck className="w-5 h-5 text-mintGreen flex-shrink-0" />
+          <span className="text-softWhite">
+            <strong className="text-mintGreen">Admin View Active:</strong> You can click{' '}
+            <span className="btn-fresh-green text-deepNavy px-2 py-0.5 rounded font-extrabold text-xs inline-block">
               Admin: Mark Resolved
             </span>{' '}
             on any ticket below to attach official remarks and move it to the Solved Archive.
@@ -148,33 +148,33 @@ export default function FeedPage() {
       {/* Tabs & Search Navigation Bar */}
       <section className="space-y-4">
         {/* Navigation Tabs matching up_campus_code.html */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4 border-b border-slate-200/80 dark:border-slate-800 pb-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 border-b border-paleBlueGrey/15 pb-4">
           <button
             onClick={() => setCurrentTab('complaint')}
-            className={`flex-1 sm:flex-none px-5 py-3 font-bold text-sm rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 ${
+            className={`flex-1 sm:flex-none px-5 py-3 font-bold text-sm rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border ${
               currentTab === 'complaint'
-                ? 'bg-slate-900 text-white dark:bg-teal-500 dark:text-slate-950 shadow-md'
-                : 'text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700'
+                ? 'bg-skyBlue/20 text-skyBlue border-skyBlue/50 shadow-glassGlow'
+                : 'text-paleBlueGrey bg-darkBlue/60 hover:bg-darkBlue border-paleBlueGrey/15 hover:text-softWhite'
             }`}
           >
-            <Wrench className="w-4 h-4 text-amber-500" />
+            <Wrench className="w-4 h-4 text-skyBlue" />
             <span>Broken (Fix It)</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-deepNavy/80 text-paleBlueGrey">
               {complaintCount}
             </span>
           </button>
 
           <button
             onClick={() => setCurrentTab('suggestion')}
-            className={`flex-1 sm:flex-none px-5 py-3 font-bold text-sm rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 ${
+            className={`flex-1 sm:flex-none px-5 py-3 font-bold text-sm rounded-2xl transition-all shadow-sm flex items-center justify-center gap-2 border ${
               currentTab === 'suggestion'
-                ? 'bg-slate-900 text-white dark:bg-teal-500 dark:text-slate-950 shadow-md'
-                : 'text-slate-500 dark:text-slate-400 bg-white/70 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700'
+                ? 'bg-mintGreen/20 text-mintGreen border-mintGreen/50 shadow-mintGlow'
+                : 'text-paleBlueGrey bg-darkBlue/60 hover:bg-darkBlue border-paleBlueGrey/15 hover:text-softWhite'
             }`}
           >
-            <Lightbulb className="w-4 h-4 text-teal-500" />
+            <Lightbulb className="w-4 h-4 text-mintGreen" />
             <span>Needs (Add It)</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-deepNavy/80 text-paleBlueGrey">
               {suggestionCount}
             </span>
           </button>
@@ -183,13 +183,13 @@ export default function FeedPage() {
             onClick={() => setCurrentTab('solved')}
             className={`w-full sm:w-auto px-5 py-3 font-bold text-sm rounded-2xl transition-all sm:ml-auto border flex items-center justify-center gap-2 ${
               currentTab === 'solved'
-                ? 'bg-emerald-500 text-white border-emerald-600 shadow-md'
-                : 'border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 bg-white/60 dark:bg-slate-800/80'
+                ? 'btn-fresh-green text-deepNavy shadow-greenGlow font-extrabold'
+                : 'border-paleBlueGrey/20 hover:border-mintGreen/40 text-paleBlueGrey bg-darkBlue/60 hover:text-softWhite'
             }`}
           >
-            <CheckCheck className="w-4 h-4 text-emerald-400" />
+            <CheckCheck className="w-4 h-4" />
             <span>Solved Archive</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200">
+            <span className="text-xs px-2 py-0.5 rounded-full bg-deepNavy/80 text-paleBlueGrey">
               {solvedCount}
             </span>
           </button>
@@ -198,23 +198,23 @@ export default function FeedPage() {
         {/* Search & Sort Controls */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-paleBlueGrey/50 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by title, location or keywords..."
-              className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl pl-11 pr-4 py-3 focus:outline-none focus:border-teal-500 transition-all font-medium shadow-sm"
+              className="w-full text-sm border border-paleBlueGrey/20 bg-darkBlue/80 text-softWhite placeholder-paleBlueGrey/50 rounded-2xl pl-11 pr-4 py-3 focus:outline-none focus:border-skyBlue transition-all font-medium shadow-inner"
             />
           </div>
 
-          <div className="flex items-center bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-2xl p-1 shadow-sm self-start sm:self-auto">
+          <div className="flex items-center bg-deepNavy/80 border border-paleBlueGrey/20 rounded-2xl p-1 shadow-inner self-start sm:self-auto">
             <button
               onClick={() => setSortBy('top')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 sortBy === 'top'
-                  ? 'bg-slate-900 text-white dark:bg-teal-500 dark:text-slate-950'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-300'
+                  ? 'bg-skyBlue text-deepNavy font-extrabold shadow-sm'
+                  : 'text-paleBlueGrey hover:text-softWhite'
               }`}
             >
               Top Votes
@@ -223,8 +223,8 @@ export default function FeedPage() {
               onClick={() => setSortBy('new')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 sortBy === 'new'
-                  ? 'bg-slate-900 text-white dark:bg-teal-500 dark:text-slate-950'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-300'
+                  ? 'bg-skyBlue text-deepNavy font-extrabold shadow-sm'
+                  : 'text-paleBlueGrey hover:text-softWhite'
               }`}
             >
               Newest
@@ -233,8 +233,8 @@ export default function FeedPage() {
               onClick={() => setSortBy('photo')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                 sortBy === 'photo'
-                  ? 'bg-slate-900 text-white dark:bg-teal-500 dark:text-slate-950'
-                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-300'
+                  ? 'bg-skyBlue text-deepNavy font-extrabold shadow-sm'
+                  : 'text-paleBlueGrey hover:text-softWhite'
               }`}
             >
               With Photos
@@ -246,12 +246,12 @@ export default function FeedPage() {
       {/* Active Posts Feed */}
       <section className="space-y-5 pb-12">
         {filteredPosts.length === 0 ? (
-          <div className="text-center py-20 bg-white/70 dark:bg-slate-800/50 backdrop-blur-sm border-2 border-slate-200 dark:border-slate-700 border-dashed rounded-[2rem] shadow-sm fade-in space-y-3">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto text-slate-400">
+          <div className="text-center py-20 bg-darkBlue/40 backdrop-blur-sm border-2 border-dashed border-paleBlueGrey/20 rounded-[2rem] shadow-sm fade-in space-y-3">
+            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto text-paleBlueGrey">
               <Wind className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">All Clear!</h3>
-            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+            <h3 className="text-xl font-bold text-softWhite">All Clear!</h3>
+            <p className="text-sm font-medium text-paleBlueGrey max-w-sm mx-auto">
               No active campus posts in this section right now.
             </p>
           </div>
@@ -275,27 +275,27 @@ export default function FeedPage() {
 
       {/* 100-Vote Escalation Alert Modal matching up_campus_code.html */}
       {escalatedPost && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-2xl max-w-sm w-full text-center relative border border-red-100 dark:border-red-900 modal-enter">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-950/60 text-red-500 rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner pulse-red relative">
+        <div className="fixed inset-0 bg-deepNavy/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 fade-in">
+          <div className="bg-darkBlue rounded-[2rem] p-8 shadow-2xl max-w-sm w-full text-center relative border border-red-500/30 modal-enter text-softWhite">
+            <div className="w-20 h-20 bg-red-950/60 text-red-400 rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner pulse-red relative border border-red-500/40">
               <AlertTriangle className="w-10 h-10" />
-              <div className="absolute -top-1 -right-1 bg-slate-900 text-white text-[11px] font-extrabold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white">
+              <div className="absolute -top-1 -right-1 bg-deepNavy text-softWhite text-[11px] font-extrabold w-6 h-6 rounded-full flex items-center justify-center border-2 border-red-500">
                 100
               </div>
             </div>
 
-            <h3 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-2 tracking-tight">
+            <h3 className="text-2xl font-extrabold text-softWhite mb-2 tracking-tight">
               Post Escalated!
             </h3>
-            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 truncate">
+            <p className="text-xs font-semibold text-paleBlueGrey mb-2 truncate">
               &quot;{escalatedPost.title}&quot;
             </p>
-            <p className="text-sm text-slate-600 dark:text-slate-300 mb-7 leading-relaxed font-medium">
-              This issue has reached <strong className="text-red-500 font-bold">100 votes</strong> and is now escalated. Administration will receive automated reminders every 24 hours.
+            <p className="text-sm text-paleBlueGrey mb-7 leading-relaxed font-medium">
+              This issue has reached <strong className="text-red-400 font-bold">100 votes</strong> and is now escalated. Administration will receive automated reminders every 24 hours.
             </p>
             <button
               onClick={closeEscalationModal}
-              className="w-full bg-slate-900 hover:bg-red-500 text-white font-bold py-3.5 rounded-xl transition-colors active:scale-95 shadow-md text-sm"
+              className="w-full btn-fresh-green text-deepNavy font-extrabold py-3.5 rounded-xl transition-colors active:scale-95 shadow-md text-sm"
             >
               Understood
             </button>
@@ -305,20 +305,20 @@ export default function FeedPage() {
 
       {/* Admin Note / Resolution Modal matching up_campus_code.html */}
       {resolvingPostId && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-[2rem] p-8 shadow-2xl max-w-md w-full relative modal-enter border border-slate-200 dark:border-slate-800">
-            <h3 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2 flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center">
+        <div className="fixed inset-0 bg-deepNavy/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 fade-in">
+          <div className="bg-darkBlue rounded-[2rem] p-8 shadow-2xl max-w-md w-full relative modal-enter border border-paleBlueGrey/20 text-softWhite">
+            <h3 className="text-xl font-extrabold text-softWhite mb-2 flex items-center gap-3">
+              <div className="w-10 h-10 bg-mintGreen/20 text-mintGreen rounded-xl flex items-center justify-center border border-mintGreen/30">
                 <CheckCheck className="w-5 h-5" />
               </div>
               <span>Mark as Resolved</span>
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-5 font-medium">
+            <p className="text-xs text-paleBlueGrey mb-5 font-medium">
               Provide an official administrative remark for the students. This will be permanently recorded in the Solved Archive.
             </p>
 
             <div className="mb-6">
-              <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2">
+              <label className="block text-[11px] font-bold text-paleBlueGrey uppercase tracking-widest mb-2">
                 Official Remarks
               </label>
               <textarea
@@ -326,20 +326,20 @@ export default function FeedPage() {
                 value={adminNoteInput}
                 onChange={(e) => setAdminNoteInput(e.target.value)}
                 placeholder="e.g., Electrical maintenance completed. LED fixtures replaced on pathway."
-                className="w-full text-sm border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white rounded-2xl px-5 py-4 focus:outline-none focus:border-emerald-500 resize-none transition-all shadow-sm font-medium"
+                className="w-full text-sm border border-paleBlueGrey/25 bg-deepNavy/90 text-softWhite placeholder-paleBlueGrey/50 rounded-2xl px-5 py-4 focus:outline-none focus:border-mintGreen resize-none transition-all shadow-inner font-medium"
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex justify-end gap-3 pt-3 border-t border-paleBlueGrey/15">
               <button
                 onClick={() => setResolvingPostId(null)}
-                className="px-6 py-2.5 font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors text-sm"
+                className="px-6 py-2.5 font-bold text-paleBlueGrey hover:bg-white/5 rounded-xl transition-colors text-sm"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirmResolve}
-                className="px-6 py-2.5 font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/30 transition-all active:scale-95 text-sm"
+                className="btn-fresh-green text-deepNavy px-6 py-2.5 font-extrabold rounded-xl shadow-lg transition-all active:scale-95 text-sm"
               >
                 Confirm Resolution
               </button>
