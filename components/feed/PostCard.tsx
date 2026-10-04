@@ -1,21 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Post } from '@/lib/types';
 import { useUpCampus } from '@/lib/store';
-import { 
-  ChevronUp, 
-  ChevronDown, 
-  MapPin, 
-  Wrench, 
-  Plus, 
-  Bell, 
-  Check, 
-  CheckCheck, 
-  Clock, 
-  ShieldCheck,
-  Building2
-} from 'lucide-react';
+import { Check, CheckCheck } from 'lucide-react';
 import Link from 'next/link';
 
 interface PostCardProps {
@@ -25,181 +13,367 @@ interface PostCardProps {
 
 export default function PostCard({ post, onResolveClick }: PostCardProps) {
   const { vote, isAdmin } = useUpCampus();
+  const [activeSlide, setActiveSlide] = useState(0);
+  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const isEscalated = post.agree_count >= 100 && post.status !== 'resolved';
   const isSolved = post.status === 'resolved';
+  const isGrievance = post.kind === 'grievance';
+  const photos = post.photos || [];
+
+  // Deterministic handle & top comment based on post id
+  const handle = post.author_name
+    ? post.author_name.toLowerCase().replace(/\s+/g, '_')
+    : `anon_${post.id.slice(-4)}`;
+
+  // Simulated / dynamic top comments for interactive fidelity
+  const simulatedComments: Record<string, { user: string; text: string; votes: number }> = {
+    c1: { user: 'priya_m21', text: 'Spoke with the facility staff today, parts are being ordered.', votes: 14 },
+    c2: { user: 'dev_k44', text: 'This has been broken since Tuesday. Needs immediate attention.', votes: 29 },
+    c3: { user: 'rohit_singh', text: 'Seconded. Almost slipped on the wet floor near the stairs.', votes: 19 },
+    c4: { user: 'ananya_v', text: 'Super essential during mid-term exam week late nights.', votes: 38 },
+  };
+
+  const commentKey = 'c' + ((parseInt(post.id.replace(/\D/g, '') || '1', 10) % 4) + 1);
+  const topComment = simulatedComments[commentKey] || {
+    user: 'campus_rep',
+    text: 'Flagged this with the estate warden during morning rounds.',
+    votes: Math.max(3, Math.floor(post.agree_count / 3)),
+  };
+
+  const commentCount = Math.max(2, Math.floor(post.agree_count / 4) + 1);
+
+  // Time display
+  const getTimeAgo = (dateStr?: string) => {
+    if (!dateStr) return 'just now';
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    if (diffHours < 1) return 'just now';
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/post/${post.id}` : '';
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+    }
+  };
+
+  const handlePrevSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveSlide((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+  };
+
+  const handleNextSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveSlide((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+  };
+
+  // Status badge details
+  const getStatusInfo = () => {
+    if (isSolved) return { label: 'Solved', class: 'approved' };
+    if (post.status === 'approved') return { label: 'Approved by Admin', class: 'approved' };
+    if (post.status === 'rejected') return { label: 'Declined', class: 'declined' };
+    return { label: 'Under Review', class: 'pending' };
+  };
+
+  const statusInfo = getStatusInfo();
 
   return (
-    <div
-      className={`glass-card rounded-[2rem] p-6 sm:p-8 flex flex-col sm:flex-row gap-6 sm:gap-8 items-start fade-in transition-all duration-300 ${
-        isEscalated
-          ? 'border-red-500/60 shadow-xl shadow-red-500/10'
-          : 'border-paleBlueGrey/15 hover:border-skyBlue/40'
-      }`}
-    >
-      {/* Voting Column */}
-      <div className="flex sm:flex-col items-center justify-between sm:justify-start bg-deepNavy/80 border border-paleBlueGrey/20 rounded-2xl p-2 shrink-0 w-full sm:w-16 shadow-inner">
-        <button
-          onClick={() => vote(post.id, 1)}
-          disabled={isSolved}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-            post.user_vote === 1
-              ? 'text-skyBlue bg-skyBlue/20 border border-skyBlue/40 shadow-sm'
-              : 'text-paleBlueGrey/70 hover:bg-white/5 hover:text-softWhite'
-          } ${isSolved ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}`}
-          title="Upvote / Agree"
-          aria-label="Upvote"
-        >
-          <ChevronUp className="w-6 h-6 stroke-[2.5]" />
-        </button>
-
-        <span
-          className={`text-base font-extrabold py-2 sm:py-3.5 tabular-nums ${
-            isEscalated
-              ? 'text-red-400'
-              : 'text-softWhite'
-          }`}
-        >
-          {post.agree_count}
-        </span>
-
-        <button
-          onClick={() => vote(post.id, -1)}
-          disabled={isSolved}
-          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-            post.user_vote === -1
-              ? 'text-amber-400 bg-amber-500/20 border border-amber-500/40 shadow-sm'
-              : 'text-paleBlueGrey/70 hover:bg-white/5 hover:text-softWhite'
-          } ${isSolved ? 'opacity-40 cursor-not-allowed' : 'active:scale-95'}`}
-          title="Downvote"
-          aria-label="Downvote"
-        >
-          <ChevronDown className="w-6 h-6 stroke-[2.5]" />
-        </button>
-      </div>
-
-      {/* Main Post Content */}
-      <div className="flex-1 w-full min-w-0 pt-0.5 space-y-3.5">
-        {/* Category & Location Badges */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          {post.kind === 'grievance' ? (
-            <span className="badge-sky text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 shadow-sm">
-              <Wrench className="w-3.5 h-3.5 text-skyBlue" />
-              <span>Fix It</span>
-            </span>
-          ) : (
-            <span className="badge-mint text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 shadow-sm">
-              <Plus className="w-3.5 h-3.5 text-mintGreen stroke-[3]" />
-              <span>Add It</span>
-            </span>
-          )}
-
-          <span className="text-xs font-semibold text-paleBlueGrey bg-white/5 border border-paleBlueGrey/20 px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 shadow-sm">
-            <MapPin className="w-3.5 h-3.5 text-skyBlue/70" />
-            <span>{post.location_name || post.location?.name || 'Campus Grounds'}</span>
-          </span>
-
-          {post.department && (
-            <span className="text-xs font-medium text-paleBlueGrey/70 hidden sm:inline-flex items-center gap-1 ml-auto">
-              <Building2 className="w-3.5 h-3.5 text-paleBlueGrey/50" />
-              <span>{post.department}</span>
-            </span>
-          )}
+    <>
+      <article
+        className={`uc-card ${isGrievance ? 'broken' : 'need'} ${isEscalated ? 'escalated' : ''} fade-in`}
+      >
+        {/* Header (Exact UpCampus 3.0 .hd) */}
+        <div className="uc-hd">
+          <span className="uc-av">↗</span>
+          <div>
+            <b>{post.author_name || 'Anonymous Student'}</b>
+            <small>
+              @{handle} · {getTimeAgo(post.created_at)}
+            </small>
+          </div>
+          <span className="uc-cat">{post.category || (isGrievance ? 'Maintenance' : 'Student Amenities')}</span>
         </div>
 
         {/* Title */}
         <Link href={`/post/${post.id}`} className="block group">
-          <h3 className="text-xl sm:text-2xl font-extrabold text-softWhite group-hover:text-skyBlue transition-colors leading-snug tracking-tight">
+          <h3 className="my-3 text-xl sm:text-[22px] font-bold text-softWhite group-hover:text-skyBlue transition-colors tracking-tight leading-snug">
             {post.title}
           </h3>
         </Link>
 
         {/* Description */}
         {post.description && (
-          <p className="text-paleBlueGrey text-sm sm:text-base leading-relaxed font-medium">
+          <p className="text-sm sm:text-[14.5px] text-paleBlueGrey/90 leading-relaxed font-normal mb-3">
             {post.description}
           </p>
         )}
 
-        {/* Photos Preview */}
-        {post.photos && post.photos.length > 0 && (
-          <div className="pt-1 flex items-center gap-3">
-            {post.photos.slice(0, 2).map((photo, i) => (
-              <div
-                key={i}
-                className="w-24 h-16 rounded-xl overflow-hidden border border-paleBlueGrey/20 bg-deepNavy shadow-inner"
-              >
+        {/* Tags Row (.tags) */}
+        <div className="uc-tags">
+          <span className={`uc-tg ${isGrievance ? 'r' : 'g'}`}>
+            {isGrievance ? 'Fix It' : '+ Add It'}
+          </span>
+          <span className="uc-tg">
+            📍 {post.location_name || post.location?.name || 'Campus Grounds'}
+          </span>
+          {post.department && (
+            <span className="uc-tg hidden sm:inline-flex">
+              🏛️ {post.department}
+            </span>
+          )}
+          {isEscalated && (
+            <span className="uc-tg r font-bold animate-pulse">
+              🚨 Escalated (100+ Votes)
+            </span>
+          )}
+        </div>
+
+        {/* Photos Grid / Carousel (.md / .car) */}
+        {photos.length > 0 && (
+          <>
+            {photos.length === 1 && (
+              <div className="uc-md n1">
                 <img
-                  src={photo}
+                  src={photos[0]}
                   alt={post.title}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform"
+                  onClick={() => setLightboxImg(photos[0])}
+                  className="rounded-xl"
                 />
               </div>
-            ))}
-          </div>
-        )}
+            )}
 
-        {/* Escalation Alert Banner (Triggered when 100+ votes hit!) */}
-        {isEscalated && (
-          <div className="bg-red-950/40 border border-red-500/40 rounded-2xl p-4 flex items-start sm:items-center gap-4 fade-in shadow-sm relative overflow-hidden backdrop-blur-md">
-            <div className="bg-red-500 text-white w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-red-500/30 pulse-red">
-              <Bell className="w-5 h-5 animate-pulse" />
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-red-300 uppercase tracking-widest mb-0.5">
-                Escalated (100+ Votes)
-              </p>
-              <p className="text-xs text-red-200/80 font-semibold">
-                Admin notified. Automated reminders trigger every 24 hours.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Solved Card View with Admin Remarks */}
-        {isSolved ? (
-          <div className="badge-mint rounded-2xl p-5 border border-mintGreen/30 w-full fade-in shadow-sm space-y-3">
-            <div className="flex items-center text-mintGreen font-extrabold text-base">
-              <div className="w-7 h-7 bg-mintGreen/20 text-mintGreen rounded-full flex items-center justify-center mr-2.5 border border-mintGreen/30">
-                <Check className="w-4 h-4 stroke-[3]" />
+            {photos.length === 2 && (
+              <div className="uc-md n2">
+                {photos.map((src, idx) => (
+                  <img
+                    key={idx}
+                    src={src}
+                    alt={`${post.title} photo ${idx + 1}`}
+                    onClick={() => setLightboxImg(src)}
+                  />
+                ))}
               </div>
-              <span>Officially Resolved</span>
-            </div>
+            )}
 
-            <div className="bg-deepNavy/85 px-5 py-4 rounded-xl border border-mintGreen/25 shadow-sm relative overflow-hidden">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-mintGreen"></div>
-              <span className="text-mintGreen font-bold uppercase text-[10px] tracking-widest block mb-1">
-                Admin Remarks
+            {photos.length === 3 && (
+              <div className="uc-md n3">
+                {photos.map((src, idx) => (
+                  <img
+                    key={idx}
+                    src={src}
+                    alt={`${post.title} photo ${idx + 1}`}
+                    onClick={() => setLightboxImg(src)}
+                  />
+                ))}
+              </div>
+            )}
+
+            {photos.length >= 4 && (
+              <div className="relative mt-3.5 rounded-xl overflow-hidden border border-white/10 bg-deepNavy/60 aspect-[16/9]">
+                <img
+                  src={photos[activeSlide]}
+                  alt={`${post.title} photo ${activeSlide + 1}`}
+                  onClick={() => setLightboxImg(photos[activeSlide])}
+                  className="w-full h-full object-cover cursor-zoom-in transition-transform duration-300 hover:scale-[1.02]"
+                />
+                
+                {/* Counter Pill */}
+                <span className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-deepNavy/80 backdrop-blur-md text-white text-xs font-semibold border border-white/15 shadow-sm">
+                  {activeSlide + 1}/{photos.length}
+                </span>
+
+                {/* Navigation Arrows */}
+                <button
+                  onClick={handlePrevSlide}
+                  aria-label="Previous photo"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-darkBlue/80 hover:bg-darkBlue text-softWhite hover:text-skyBlue flex items-center justify-center border border-white/20 shadow-md backdrop-blur-sm transition-colors text-base"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={handleNextSlide}
+                  aria-label="Next photo"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-darkBlue/80 hover:bg-darkBlue text-softWhite hover:text-skyBlue flex items-center justify-center border border-white/20 shadow-md backdrop-blur-sm transition-colors text-base"
+                >
+                  ›
+                </button>
+
+                {/* Dot Indicators */}
+                <div className="absolute bottom-2.5 left-0 right-0 flex justify-center items-center gap-1.5">
+                  {photos.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveSlide(i);
+                      }}
+                      className={`h-1.5 rounded-full transition-all ${
+                        i === activeSlide ? 'w-4 bg-skyBlue' : 'w-1.5 bg-white/40 hover:bg-white/70'
+                      }`}
+                      aria-label={`Go to slide ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Solved Note Block if Resolved */}
+        {isSolved && (
+          <div className="mt-3.5 p-3.5 rounded-xl bg-deepNavy/85 border border-mintGreen/30 text-xs flex items-start gap-2.5 shadow-sm">
+            <div className="w-5 h-5 rounded-full bg-mintGreen/20 text-mintGreen flex items-center justify-center shrink-0 mt-0.5 border border-mintGreen/40">
+              <Check className="w-3 h-3 stroke-[3]" />
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-mintGreen block">
+                Verified Admin Resolution
               </span>
-              <p className="text-softWhite text-sm font-medium leading-relaxed">
-                {post.admin_note || 'Issue addressed by campus administration on site.'}
+              <p className="text-softWhite font-medium leading-relaxed">
+                {post.admin_note || 'Issue inspected, addressed, and physically confirmed on site.'}
               </p>
             </div>
           </div>
-        ) : (
-          /* Footer Meta & Admin Action Buttons */
-          <div className="flex flex-wrap items-center justify-between border-t border-paleBlueGrey/15 pt-4 gap-4">
-            <div className="flex items-center text-xs font-semibold text-paleBlueGrey/70">
-              <Clock className="w-3.5 h-3.5 mr-1.5 text-paleBlueGrey/50" />
-              <span>Reported {post.author_name ? `by ${post.author_name}` : 'recently'}</span>
-            </div>
+        )}
 
-            {isAdmin ? (
-              <button
-                onClick={() => onResolveClick?.(post.id)}
-                className="btn-fresh-green text-deepNavy text-xs sm:text-sm font-extrabold px-5 py-2.5 rounded-xl shadow-lg transition-all flex items-center gap-2 active:scale-95 ml-auto"
+        {/* Action Row (Exact UpCampus 3.0 .acts) */}
+        <div className="uc-acts">
+          {/* Vote Capsule (.vt) */}
+          <div className={`uc-vt ${post.user_vote === 1 ? 'on' : ''}`}>
+            <button
+              onClick={() => vote(post.id, 1)}
+              disabled={isSolved}
+              className={`uc-ab up ${post.user_vote === 1 ? 'on' : ''} ${
+                isSolved ? 'opacity-40 cursor-not-allowed' : 'active:scale-90'
+              }`}
+              aria-label="Upvote"
+              title="Upvote / Agree"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="17"
+                height="17"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.4"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <CheckCheck className="w-4 h-4 stroke-[2.5]" />
-                <span>Admin: Mark Resolved</span>
-              </button>
-            ) : (
-              <span className="badge-sky text-xs font-extrabold px-3.5 py-1.5 rounded-xl uppercase tracking-widest">
-                Under Review
+                <path d="M6 15l6-6 6 6" />
+              </svg>
+            </button>
+            <b className="tabular-nums">{post.agree_count}</b>
+          </div>
+
+          {/* Comment with 3.0 Popover (.cw + .pop) */}
+          <span className="uc-cw">
+            <Link
+              href={`/post/${post.id}`}
+              className="uc-ab"
+              aria-label="Comments"
+              title="View comments"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-5.4A8 8 0 1 1 21 12z" />
+              </svg>
+              <span>{commentCount}</span>
+            </Link>
+
+            {/* UpCampus 3.0 Top Comment Popover */}
+            <div className="uc-pop">
+              <small>Top student comment</small>
+              <div className="uc-pt">
+                <b>@{topComment.user}</b> {topComment.text}
+              </div>
+              <em>▲ {topComment.votes} votes</em>
+            </div>
+          </span>
+
+          {/* Share Button with Link Copy (.ab) */}
+          <button
+            onClick={handleShare}
+            className="uc-ab relative"
+            aria-label="Share via Telegram / Copy link"
+            title="Copy share link"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11zM21.854 2.147 10.914 13.086" />
+            </svg>
+            {copied && (
+              <span className="absolute left-1/2 -top-6 -translate-x-1/2 px-2 py-0.5 rounded bg-freshGreen text-deepNavy font-extrabold text-[10px] whitespace-nowrap shadow-md fade-in">
+                Copied!
               </span>
             )}
+          </button>
+
+          {/* Right Status Pill & Admin Action (.sp) */}
+          <div className="uc-sp">
+            {isAdmin && !isSolved && (
+              <button
+                onClick={() => onResolveClick?.(post.id)}
+                className="uc-mb s flex items-center gap-1.5 shadow-sm active:scale-95"
+                title="Mark this issue as solved"
+              >
+                <CheckCheck className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Mark Solved</span>
+              </button>
+            )}
+
+            <span className={`uc-pl ${statusInfo.class}`}>
+              {statusInfo.label}
+            </span>
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      </article>
+
+      {/* Lightbox Dialog (Exact UpCampus 3.0 Image Zoom) */}
+      {lightboxImg && (
+        <div
+          onClick={() => setLightboxImg(null)}
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out fade-in"
+        >
+          <div className="relative max-w-4xl max-h-[90vh]">
+            <img
+              src={lightboxImg}
+              alt="Enlarged photo preview"
+              className="max-w-full max-h-[85vh] rounded-2xl object-contain shadow-2xl border border-white/20"
+            />
+            <span className="absolute top-4 right-4 bg-deepNavy/80 text-softWhite text-xs px-3 py-1.5 rounded-full border border-white/20">
+              Click anywhere to close
+            </span>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
