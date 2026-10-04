@@ -12,20 +12,25 @@ interface PostCardProps {
 }
 
 export default function PostCard({ post, onResolveClick }: PostCardProps) {
+  if (!post) return null;
+
   const { vote, isAdmin } = useUpCampus();
   const [activeSlide, setActiveSlide] = useState(0);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const isEscalated = post.agree_count >= 100 && post.status !== 'resolved';
+  const safeId = String(post.id || 'post-1');
+  const agreeCount = typeof post.agree_count === 'number' && !isNaN(post.agree_count) ? post.agree_count : 0;
+  const isEscalated = agreeCount >= 100 && post.status !== 'resolved';
   const isSolved = post.status === 'resolved';
   const isGrievance = post.kind === 'grievance';
-  const photos = post.photos || [];
+  const photos = Array.isArray(post.photos) ? post.photos.filter((p) => typeof p === 'string' && p.trim()) : [];
 
-  // Deterministic handle & top comment based on post id
+  // Deterministic handle & top comment based on safe post id
+  const safeAuthor = String(post.author_name || (post.anonymous ? 'Anonymous Student' : 'Student Citizen'));
   const handle = post.author_name
-    ? post.author_name.toLowerCase().replace(/\s+/g, '_')
-    : `anon_${post.id.slice(-4)}`;
+    ? safeAuthor.toLowerCase().replace(/\s+/g, '_')
+    : `anon_${safeId.slice(-4) || 'user'}`;
 
   // Simulated / dynamic top comments for interactive fidelity
   const simulatedComments: Record<string, { user: string; text: string; votes: number }> = {
@@ -35,19 +40,23 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
     c4: { user: 'ananya_v', text: 'Super essential during mid-term exam week late nights.', votes: 38 },
   };
 
-  const commentKey = 'c' + ((parseInt(post.id.replace(/\D/g, '') || '1', 10) % 4) + 1);
+  const rawDigits = safeId.replace(/\D/g, '');
+  const idNum = parseInt(rawDigits || '1', 10);
+  const commentKey = 'c' + ((isNaN(idNum) ? 1 : idNum % 4) + 1);
   const topComment = simulatedComments[commentKey] || {
     user: 'campus_rep',
     text: 'Flagged this with the estate warden during morning rounds.',
-    votes: Math.max(3, Math.floor(post.agree_count / 3)),
+    votes: Math.max(3, Math.floor(agreeCount / 3)),
   };
 
-  const commentCount = Math.max(2, Math.floor(post.agree_count / 4) + 1);
+  const commentCount = Math.max(2, Math.floor(agreeCount / 4) + 1);
 
-  // Time display
+  // Time display with NaN safety
   const getTimeAgo = (dateStr?: string) => {
     if (!dateStr) return 'just now';
-    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const timestamp = new Date(dateStr).getTime();
+    if (isNaN(timestamp)) return 'recently';
+    const diffMs = Date.now() - timestamp;
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     if (diffHours < 1) return 'just now';
     if (diffHours < 24) return `${diffHours}h ago`;
@@ -57,13 +66,14 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     try {
-      const shareUrl = typeof window !== 'undefined' ? `${window.location.origin}/post/${post.id}` : '';
-      if (navigator.clipboard) {
+      if (typeof window !== 'undefined' && navigator?.clipboard?.writeText) {
+        const shareUrl = `${window.location.origin}/post/${safeId}`;
         await navigator.clipboard.writeText(shareUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       // Fallback
     }

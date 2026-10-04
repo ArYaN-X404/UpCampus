@@ -42,14 +42,15 @@ export default function FeedPage() {
   const [resolvingPostId, setResolvingPostId] = useState<string | null>(null);
   const [adminNoteInput, setAdminNoteInput] = useState('');
 
-  // Counts for tabs
-  const complaintCount = posts.filter((p) => p.kind === 'grievance' && p.status !== 'resolved').length;
-  const suggestionCount = posts.filter((p) => p.kind === 'suggestion' && p.status !== 'resolved').length;
-  const solvedCount = posts.filter((p) => p.status === 'resolved').length;
+  // Counts for tabs with null safety
+  const complaintCount = (posts || []).filter((p) => p && p.kind === 'grievance' && p.status !== 'resolved').length;
+  const suggestionCount = (posts || []).filter((p) => p && p.kind === 'suggestion' && p.status !== 'resolved').length;
+  const solvedCount = (posts || []).filter((p) => p && p.status === 'resolved').length;
 
-  // Filter posts based on currentTab & search
+  // Filter posts based on currentTab & search with complete null/undefined protection
   const filteredPosts = useMemo(() => {
-    let result = posts.filter((p) => {
+    let result = (posts || []).filter((p) => {
+      if (!p || typeof p !== 'object') return false;
       if (['rejected'].includes(p.status)) return false;
 
       if (currentTab === 'solved') {
@@ -61,24 +62,30 @@ export default function FeedPage() {
       return p.kind === 'suggestion' && p.status !== 'resolved';
     });
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q) ||
-          (p.description && p.description.toLowerCase().includes(q)) ||
-          p.category.toLowerCase().includes(q) ||
-          (p.location_name && p.location_name.toLowerCase().includes(q))
-      );
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((p) => {
+        if (!p) return false;
+        const title = String(p.title || '').toLowerCase();
+        const desc = String(p.description || '').toLowerCase();
+        const cat = String(p.category || '').toLowerCase();
+        const loc = String(p.location_name || p.location?.name || '').toLowerCase();
+        const dept = String(p.department || '').toLowerCase();
+        return title.includes(q) || desc.includes(q) || cat.includes(q) || loc.includes(q) || dept.includes(q);
+      });
     }
 
-    // Sort order
+    // Safe Sort order
     if (sortBy === 'top') {
-      result.sort((a, b) => (b.agree_count || 0) - (a.agree_count || 0));
+      result.sort((a, b) => (Number(b.agree_count) || 0) - (Number(a.agree_count) || 0));
     } else if (sortBy === 'new') {
-      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      result.sort((a, b) => {
+        const timeA = new Date(a.created_at || 0).getTime() || 0;
+        const timeB = new Date(b.created_at || 0).getTime() || 0;
+        return timeB - timeA;
+      });
     } else if (sortBy === 'photo') {
-      result.sort((a, b) => (b.photos?.length || 0) - (a.photos?.length || 0));
+      result.sort((a, b) => ((b.photos && b.photos.length) || 0) - ((a.photos && a.photos.length) || 0));
     }
 
     return result;
@@ -86,17 +93,17 @@ export default function FeedPage() {
 
   // Escalation radar items (closest to 100 votes)
   const escalationRadar = useMemo(() => {
-    return posts
-      .filter((p) => p.status !== 'resolved' && !['rejected'].includes(p.status))
-      .sort((a, b) => (b.agree_count || 0) - (a.agree_count || 0))
+    return (posts || [])
+      .filter((p) => p && p.status !== 'resolved' && !['rejected'].includes(p.status))
+      .sort((a, b) => (Number(b.agree_count) || 0) - (Number(a.agree_count) || 0))
       .slice(0, 3);
   }, [posts]);
 
   // Top trending for Live Wall teaser
   const liveWallTeaser = useMemo(() => {
-    return posts
-      .filter((p) => p.status !== 'resolved' && !['rejected'].includes(p.status))
-      .sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0))
+    return (posts || [])
+      .filter((p) => p && p.status !== 'resolved' && !['rejected'].includes(p.status))
+      .sort((a, b) => (Number(b.impact_score) || 0) - (Number(a.impact_score) || 0))
       .slice(0, 3);
   }, [posts]);
 
@@ -476,7 +483,7 @@ export default function FeedPage() {
                     {p.title}
                   </span>
                   <span className="text-xs font-bold text-amber-400 tabular-nums">
-                    {p.impact_score?.toFixed(1)}
+                    {Number(p.impact_score || 0).toFixed(1)}
                   </span>
                 </Link>
               ))}

@@ -21,31 +21,31 @@ export default function LiveWallPage() {
   const { posts, vote } = useUpCampus();
 
   const activePosts = useMemo(() => {
-    return posts
-      .filter((p) => !['rejected'].includes(p.status))
-      .sort((a, b) => (b.impact_score || 0) - (a.impact_score || 0))
+    return (posts || [])
+      .filter((p) => p && !['rejected'].includes(p.status))
+      .sort((a, b) => (Number(b.impact_score) || 0) - (Number(a.impact_score) || 0))
       .slice(0, 8);
   }, [posts]);
 
-  const maxImpact = Math.max(...activePosts.map((p) => p.impact_score || 10), 100);
+  const maxImpact = Math.max(100, ...activePosts.map((p) => Number(p.impact_score) || 10));
 
   const totalVotes = useMemo(() => {
-    return posts.reduce((sum, p) => sum + (p.agree_count || 0), 0);
+    return (posts || []).reduce((sum, p) => sum + (Number(p?.agree_count) || 0), 0);
   }, [posts]);
 
   const escalatedCount = useMemo(() => {
-    return posts.filter((p) => p.agree_count >= 100 && p.status !== 'resolved').length;
+    return (posts || []).filter((p) => p && Number(p.agree_count) >= 100 && p.status !== 'resolved').length;
   }, [posts]);
 
   const solvedCount = useMemo(() => {
-    return posts.filter((p) => p.status === 'resolved').length;
+    return (posts || []).filter((p) => p && p.status === 'resolved').length;
   }, [posts]);
 
   // Escalation radar
   const nearEscalation = useMemo(() => {
-    return posts
-      .filter((p) => p.status !== 'resolved' && !['rejected'].includes(p.status))
-      .sort((a, b) => (b.agree_count || 0) - (a.agree_count || 0))
+    return (posts || [])
+      .filter((p) => p && p.status !== 'resolved' && !['rejected'].includes(p.status))
+      .sort((a, b) => (Number(b.agree_count) || 0) - (Number(a.agree_count) || 0))
       .slice(0, 4);
   }, [posts]);
 
@@ -206,7 +206,7 @@ export default function LiveWallPage() {
                       <div className="text-right hidden sm:block">
                         <div className="flex items-center justify-end gap-1 font-extrabold text-amber-400 text-sm sm:text-base tabular-nums">
                           <Flame className="w-4 h-4 fill-amber-400/20" />
-                          <span>{post.impact_score?.toFixed(1) || '8.5'}</span>
+                          <span>{Number(post.impact_score || 0).toFixed(1)}</span>
                         </div>
                         <span className="text-[10px] text-paleBlueGrey block">
                           Impact Index

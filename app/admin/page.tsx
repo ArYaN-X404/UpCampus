@@ -33,18 +33,19 @@ export default function AdminDashboardPage() {
 
   // Filtered post queues
   const filteredPosts = useMemo(() => {
-    return posts.filter((p) => {
+    return (posts || []).filter((p) => {
+      if (!p || typeof p !== 'object') return false;
       if (departmentFilter !== 'all') {
-        const d = (p.department || '').toLowerCase();
+        const d = String(p.department || '').toLowerCase();
         const f = departmentFilter.toLowerCase();
         if (!d.includes(f) && !f.includes(d)) return false;
       }
-      if (adminSearch.trim()) {
-        const q = adminSearch.toLowerCase();
+      if (adminSearch && adminSearch.trim()) {
+        const q = adminSearch.toLowerCase().trim();
         return (
-          p.title.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q) ||
-          (p.location_name && p.location_name.toLowerCase().includes(q))
+          String(p.title || '').toLowerCase().includes(q) ||
+          String(p.category || '').toLowerCase().includes(q) ||
+          String(p.location_name || p.location?.name || '').toLowerCase().includes(q)
         );
       }
       return true;
@@ -259,7 +260,7 @@ export default function AdminDashboardPage() {
                     </span>
                     <div className="flex items-center gap-1 text-xs font-bold text-skyBlue">
                       <Flame className="w-3.5 h-3.5 text-skyBlue" />
-                      <span>{post.impact_score?.toFixed(1) || '6.5'}</span>
+                      <span>{Number(post.impact_score || 0).toFixed(1)}</span>
                     </div>
                   </div>
 
@@ -325,7 +326,7 @@ export default function AdminDashboardPage() {
                     </span>
                     <div className="flex items-center gap-1 text-xs font-bold text-amber-400">
                       <Flame className="w-3.5 h-3.5" />
-                      <span>{post.impact_score?.toFixed(1) || '8.2'}</span>
+                      <span>{Number(post.impact_score || 0).toFixed(1)}</span>
                     </div>
                   </div>
 

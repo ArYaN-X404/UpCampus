@@ -36,11 +36,73 @@ const STORAGE_KEY_ROLE = 'upcampus_role_v2';
 const STORAGE_KEY_ADMIN = 'upcampus_admin_v2';
 const STORAGE_KEY_THEME = 'upcampus_theme_v2';
 
+export function sanitizePost(raw: any): Post {
+  if (!raw || typeof raw !== 'object') {
+    return {
+      id: `post-${Date.now()}`,
+      author_id: 'student-1',
+      kind: 'grievance',
+      title: 'Campus Issue',
+      description: '',
+      category: 'Broken',
+      severity: 1,
+      safety_risk: false,
+      department: 'General Maintenance',
+      photos: [],
+      anonymous: false,
+      status: 'approved',
+      agree_count: 1,
+      disagree_count: 0,
+      created_at: new Date().toISOString(),
+      impact_score: 1.0,
+      location_name: 'Campus Grounds',
+      author_name: 'Student Citizen',
+      user_vote: null,
+    };
+  }
+
+  const safeId = String(raw.id || `post-${Date.now()}`);
+  const safeTitle = String(raw.title || 'Campus Issue');
+  const safeKind = raw.kind === 'suggestion' ? 'suggestion' : 'grievance';
+  const safeStatus = raw.status || 'approved';
+  const safeCategory = String(raw.category || (safeKind === 'suggestion' ? 'Needs' : 'Broken'));
+  const safeAgree = typeof raw.agree_count === 'number' && !isNaN(raw.agree_count) ? Math.max(0, raw.agree_count) : 1;
+  const safeDisagree = typeof raw.disagree_count === 'number' && !isNaN(raw.disagree_count) ? Math.max(0, raw.disagree_count) : 0;
+  const safePhotos = Array.isArray(raw.photos) ? raw.photos.filter((p: any) => typeof p === 'string' && p.trim()) : [];
+  const safeLocation = String(raw.location_name || raw.location?.name || 'Campus Grounds');
+  const safeAuthor = String(raw.author_name || (raw.anonymous ? 'Anonymous Student' : 'Student Citizen'));
+  const parsedImpact = typeof raw.impact_score === 'number' 
+    ? raw.impact_score 
+    : parseFloat(String(raw.impact_score || '0'));
+  const safeImpact = isNaN(parsedImpact) ? safeAgree * 1.5 : parsedImpact;
+
+  return {
+    ...raw,
+    id: safeId,
+    title: safeTitle,
+    kind: safeKind,
+    status: safeStatus,
+    category: safeCategory,
+    description: raw.description ? String(raw.description) : '',
+    agree_count: safeAgree,
+    disagree_count: safeDisagree,
+    photos: safePhotos,
+    location_name: safeLocation,
+    author_name: safeAuthor,
+    impact_score: safeImpact,
+    severity: [1, 2, 3].includes(raw.severity) ? raw.severity : 1,
+    safety_risk: Boolean(raw.safety_risk),
+    department: String(raw.department || 'General Maintenance'),
+    created_at: raw.created_at && !isNaN(new Date(raw.created_at).getTime()) ? raw.created_at : new Date().toISOString(),
+    user_vote: raw.user_vote === 1 || raw.user_vote === -1 ? raw.user_vote : null,
+  };
+}
+
 export function UpCampusProvider({ children }: { children: React.ReactNode }) {
   const [currentRole, setCurrentRole] = useState<UserRole>('student');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+  const [posts, setPosts] = useState<Post[]>(() => INITIAL_POSTS.map(sanitizePost));
   const [statusEvents, setStatusEvents] = useState<Record<string, StatusEvent[]>>(MOCK_STATUS_EVENTS);
   const [escalatedPost, setEscalatedPost] = useState<Post | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -53,7 +115,14 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       const savedAdmin = localStorage.getItem(STORAGE_KEY_ADMIN);
       const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as 'light' | 'dark' | null;
 
-      if (savedPosts) setPosts(JSON.parse(savedPosts));
+      if (savedPosts) {
+        const parsed = JSON.parse(savedPosts);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPosts(parsed.map(sanitizePost));
+        } else {
+          setPosts(INITIAL_POSTS.map(sanitizePost));
+        }
+      }
       if (savedEvents) setStatusEvents(JSON.parse(savedEvents));
       if (savedRole && ['student', 'supervisor', 'admin'].includes(savedRole)) {
         setCurrentRole(savedRole);
@@ -63,11 +132,10 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
         setTheme(savedTheme);
         applyTheme(savedTheme);
       } else {
-        // default to light theme to match up_campus_code.html
         applyTheme('light');
       }
     } catch {
-      // fallback
+      setPosts(INITIAL_POSTS.map(sanitizePost));
     } finally {
       setIsLoaded(true);
     }
@@ -140,7 +208,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       let triggeredEscalation: Post | null = null;
 
       const next = prev.map((p) => {
-        if (p.id !== postId) return p;
+        if (String(p.id) !== String(postId)) return p;
         if (p.status === 'resolved') return p; // Cannot vote on solved
 
         const oldAgree = p.agree_count;
@@ -281,7 +349,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addPost = (newPostData: Omit<Post, 'id' | 'created_at' | 'agree_count' | 'disagree_count' | 'net_votes' | 'impact_score'>) => {
-    const newPost: Post = {
+    const rawPost: Post = {
       ...newPostData,
       id: `post-${Date.now()}`,
       created_at: new Date().toISOString(),
@@ -293,6 +361,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
       status: 'approved', // Auto-approved for frictionless demo as in up_campus_code.html
     };
 
+    const newPost = sanitizePost(rawPost);
     setPosts((prev) => [newPost, ...prev]);
     return newPost;
   };
