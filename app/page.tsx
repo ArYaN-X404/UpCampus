@@ -41,6 +41,7 @@ export default function FeedPage() {
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
   const [resolvingPostId, setResolvingPostId] = useState<string | null>(null);
   const [adminNoteInput, setAdminNoteInput] = useState('');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // Counts for tabs with null safety
   const complaintCount = (posts || []).filter((p) => p && p.kind === 'grievance' && p.status !== 'resolved').length;
@@ -332,6 +333,22 @@ export default function FeedPage() {
             </div>
           </section>
 
+          {/* Real-Time Citizen Toast Alert */}
+          {toastMsg && (
+            <div className="p-3.5 rounded-xl bg-freshGreen/20 border border-freshGreen/40 text-softWhite flex items-center justify-between shadow-lg fade-in">
+              <div className="flex items-center gap-2 text-xs font-bold text-mintGreen">
+                <CheckCircle2 className="w-4 h-4 text-freshGreen shrink-0" />
+                <span>{toastMsg}</span>
+              </div>
+              <button 
+                onClick={() => setToastMsg(null)} 
+                className="text-paleBlueGrey hover:text-softWhite text-xs font-bold px-2 py-0.5"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* Active Posts Feed */}
           <section className="space-y-4 pb-12">
             {filteredPosts.length === 0 ? (
@@ -507,6 +524,17 @@ export default function FeedPage() {
         isOpen={isPostModalOpen}
         onClose={() => setIsPostModalOpen(false)}
         defaultType={currentTab === 'complaint' ? 'complaint' : 'suggestion'}
+        onPostCreated={(newPost) => {
+          // 1. Switch to matching tab
+          setCurrentTab(newPost.kind === 'grievance' ? 'complaint' : 'suggestion');
+          // 2. Set sort to newest so the post is immediately displayed at the top of the feed
+          setSortBy('new');
+          // 3. Clear search filter
+          setSearchQuery('');
+          // 4. Show success banner
+          setToastMsg(`🎉 Ticket "${newPost.title}" posted to the live feed! (+10 XP)`);
+          setTimeout(() => setToastMsg(null), 6000);
+        }}
       />
 
       {/* 100-Vote Escalation Alert Modal */}

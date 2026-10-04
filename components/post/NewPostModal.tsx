@@ -29,6 +29,7 @@ interface NewPostModalProps {
   onClose: () => void;
   defaultType?: 'complaint' | 'suggestion';
   onSuccessToast?: (msg: string) => void;
+  onPostCreated?: (post: any) => void;
 }
 
 interface TriageData {
@@ -49,7 +50,8 @@ export default function NewPostModal({
   isOpen, 
   onClose, 
   defaultType = 'suggestion',
-  onSuccessToast 
+  onSuccessToast,
+  onPostCreated 
 }: NewPostModalProps) {
   const { addPost, searchSimilar, upvotePost, currentUser } = useUpCampus();
 
@@ -248,7 +250,7 @@ export default function NewPostModal({
   const executeSubmit = () => {
     if (!isFormValid) return;
 
-    addPost({
+    const newPost = addPost({
       author_id: currentUser?.id || 'student-1',
       kind,
       title: title.trim(),
@@ -264,6 +266,7 @@ export default function NewPostModal({
       author_name: anonymous ? 'Anonymous Student' : currentUser?.display_name || 'Aarav Sharma (CS-25)',
     });
 
+    onPostCreated?.(newPost);
     onSuccessToast?.('🎉 +10 XP Citizen Reward! Your ticket was posted to the campus feed.');
     onClose();
   };

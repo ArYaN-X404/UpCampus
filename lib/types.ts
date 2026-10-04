@@ -101,6 +101,17 @@ export interface ModerationAction {
   created_at: string;
 }
 
+export interface PostComment {
+  id: string;
+  post_id: string;
+  author_id: string;
+  author_name: string;
+  author_handle: string;
+  text: string;
+  created_at: string;
+  votes: number;
+}
+
 export interface TriageResult {
   title: string;
   category: string;

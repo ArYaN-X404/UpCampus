@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Post } from '@/lib/types';
 import { useUpCampus } from '@/lib/store';
-import { Check, CheckCheck } from 'lucide-react';
+import { Check, CheckCheck, Trash2, MessageSquare, Send } from 'lucide-react';
 import Link from 'next/link';
 
 interface PostCardProps {
@@ -14,10 +14,12 @@ interface PostCardProps {
 export default function PostCard({ post, onResolveClick }: PostCardProps) {
   if (!post) return null;
 
-  const { vote, isAdmin } = useUpCampus();
+  const { vote, isAdmin, currentUser, deletePost, comments, addComment, deleteComment } = useUpCampus();
   const [activeSlide, setActiveSlide] = useState(0);
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [commentInput, setCommentInput] = useState('');
 
   const safeId = String(post.id || 'post-1');
   const agreeCount = typeof post.agree_count === 'number' && !isNaN(post.agree_count) ? post.agree_count : 0;
@@ -49,7 +51,30 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
     votes: Math.max(3, Math.floor(agreeCount / 3)),
   };
 
-  const commentCount = Math.max(2, Math.floor(agreeCount / 4) + 1);
+  const postComments = comments[post.id] || [];
+  const commentCount = postComments.length;
+  const isOwner = currentUser?.id === post.author_id || post.author_id === 'student-1' || isAdmin;
+
+  const handleDeletePost = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (window.confirm('Delete this ticket from the campus feed? This action is permanent.')) {
+      deletePost(post.id);
+    }
+  };
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!commentInput.trim()) return;
+    addComment(post.id, commentInput.trim());
+    setCommentInput('');
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (window.confirm('Delete your comment?')) {
+      deleteComment(post.id, commentId);
+    }
+  };
 
   // Time display with NaN safety
   const getTimeAgo = (dateStr?: string) => {
@@ -287,38 +312,17 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
             <b className="tabular-nums">{post.agree_count}</b>
           </div>
 
-          {/* Comment with 3.0 Popover (.cw + .pop) */}
-          <span className="uc-cw">
-            <Link
-              href={`/post/${post.id}`}
-              className="uc-ab"
-              aria-label="Comments"
-              title="View comments"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-5.4A8 8 0 1 1 21 12z" />
-              </svg>
-              <span>{commentCount}</span>
-            </Link>
-
-            {/* UpCampus 3.0 Top Comment Popover */}
-            <div className="uc-pop">
-              <small>Top student comment</small>
-              <div className="uc-pt">
-                <b>@{topComment.user}</b> {topComment.text}
-              </div>
-              <em>▲ {topComment.votes} votes</em>
-            </div>
-          </span>
+          {/* Comment Button (Toggles Interactive Drawer) */}
+          <button
+            type="button"
+            onClick={() => setIsCommentsOpen(!isCommentsOpen)}
+            className={`uc-ab ${isCommentsOpen ? 'bg-sky-500/20 text-sky-300 border-sky-400/40' : ''}`}
+            aria-label="Comments"
+            title="View & add comments"
+          >
+            <MessageSquare className="w-4 h-4" />
+            <span>{commentCount}</span>
+          </button>
 
           {/* Share Button with Link Copy (.ab) */}
           <button
@@ -346,6 +350,20 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
             )}
           </button>
 
+          {/* Delete Post Button (Owner or Admin) */}
+          {isOwner && (
+            <button
+              type="button"
+              onClick={handleDeletePost}
+              className="uc-ab text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border-rose-500/20"
+              title="Delete this ticket"
+              aria-label="Delete ticket"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <span className="text-[11px] font-semibold">Delete</span>
+            </button>
+          )}
+
           {/* Right Status Pill & Admin Action (.sp) */}
           <div className="uc-sp">
             {isAdmin && !isSolved && (
@@ -364,6 +382,76 @@ export default function PostCard({ post, onResolveClick }: PostCardProps) {
             </span>
           </div>
         </div>
+
+        {/* Interactive Student Comments Drawer */}
+        {isCommentsOpen && (
+          <div className="mt-3 pt-3 border-t border-slate-700/60 space-y-3 fade-in">
+            <div className="flex items-center justify-between text-xs text-slate-400">
+              <span className="font-bold text-slate-200 flex items-center gap-1.5">
+                <MessageSquare className="w-3.5 h-3.5 text-sky-400" />
+                Student Comments ({postComments.length})
+              </span>
+              <button 
+                type="button"
+                onClick={() => setIsCommentsOpen(false)}
+                className="text-[11px] text-slate-400 hover:text-white transition-colors"
+              >
+                Close ✕
+              </button>
+            </div>
+
+            {/* Comment Form */}
+            <form onSubmit={handleAddComment} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                placeholder={`Comment as @${currentUser?.display_name?.toLowerCase().replace(/\s+/g, '_') || 'student'}...`}
+                className="flex-1 bg-[#091124] border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-400"
+              />
+              <button
+                type="submit"
+                disabled={!commentInput.trim()}
+                className="px-3 py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 disabled:opacity-40 text-slate-950 font-bold text-xs flex items-center gap-1 transition-all"
+              >
+                <Send className="w-3 h-3" />
+                <span>Post</span>
+              </button>
+            </form>
+
+            {/* Comments List */}
+            <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+              {postComments.length === 0 ? (
+                <p className="text-xs text-slate-500 italic py-1">No comments yet. Share an on-site update!</p>
+              ) : (
+                postComments.map((c) => {
+                  const isCommentOwner = c.author_id === currentUser?.id || c.author_id === 'student-1' || isAdmin;
+                  return (
+                    <div key={c.id} className="p-2 rounded-lg bg-[#091124] border border-slate-800/80 flex items-start justify-between gap-2 text-xs">
+                      <div className="space-y-0.5 min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-slate-200">@{c.author_handle || c.author_name}</span>
+                          <span className="text-[10px] text-slate-500">• {getTimeAgo(c.created_at)}</span>
+                        </div>
+                        <p className="text-slate-300 text-[11px] leading-relaxed break-words">{c.text}</p>
+                      </div>
+                      {isCommentOwner && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteComment(c.id)}
+                          className="p-1 text-slate-500 hover:text-rose-400 transition-colors shrink-0"
+                          title="Delete your comment"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        )}
       </article>
 
       {/* Lightbox Dialog (Exact UpCampus 3.0 Image Zoom) */}

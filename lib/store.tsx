@@ -2,9 +2,10 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { INITIAL_POSTS, MOCK_PROFILES, MOCK_STATUS_EVENTS } from './data/mockData';
-import { Post, PostStatus, Profile, StatusEvent, UserRole } from './types';
+import { Post, PostComment, PostStatus, Profile, StatusEvent, UserRole } from './types';
+import { supabase, isSupabaseConfigured } from './supabase/client';
 
-interface UpCampusContextType {
+export interface UpCampusContextType {
   currentUser: Profile;
   currentRole: UserRole;
   switchRole: (role: UserRole) => void;
@@ -14,6 +15,7 @@ interface UpCampusContextType {
   toggleTheme: () => void;
   posts: Post[];
   statusEvents: Record<string, StatusEvent[]>;
+  comments: Record<string, PostComment[]>;
   escalatedPost: Post | null;
   closeEscalationModal: () => void;
   vote: (postId: string, delta: 1 | -1) => void;
@@ -24,6 +26,9 @@ interface UpCampusContextType {
   resolvePostWithAdminNote: (postId: string, note: string) => void;
   verifyPost: (postId: string, fixed: boolean, comment?: string) => void;
   addPost: (post: Omit<Post, 'id' | 'created_at' | 'agree_count' | 'disagree_count' | 'net_votes' | 'impact_score'>) => Post;
+  deletePost: (postId: string) => void;
+  addComment: (postId: string, text: string) => PostComment;
+  deleteComment: (postId: string, commentId: string) => void;
   resetDemoData: () => void;
   searchSimilar: (query: string, locationId?: number) => Post[];
 }
@@ -35,6 +40,46 @@ const STORAGE_KEY_EVENTS = 'upcampus_events_v2';
 const STORAGE_KEY_ROLE = 'upcampus_role_v2';
 const STORAGE_KEY_ADMIN = 'upcampus_admin_v2';
 const STORAGE_KEY_THEME = 'upcampus_theme_v2';
+const STORAGE_KEY_COMMENTS = 'upcampus_comments_v2';
+
+const INITIAL_COMMENTS: Record<string, PostComment[]> = {
+  '1': [
+    {
+      id: 'c-101',
+      post_id: '1',
+      author_id: 'student-1',
+      author_name: 'Aarav Sharma',
+      author_handle: 'aarav_cs25',
+      text: 'Almost twisted my ankle here last night. Really dangerous near the library turn.',
+      created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+      votes: 14,
+    }
+  ],
+  '2': [
+    {
+      id: 'c-102',
+      post_id: '2',
+      author_id: 'student-2',
+      author_name: 'Priya Patel',
+      author_handle: 'priya_ee',
+      text: 'Water is leaking into the lower electrical shaft. Urgent attention needed!',
+      created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
+      votes: 9,
+    }
+  ],
+  '3': [
+    {
+      id: 'c-103',
+      post_id: '3',
+      author_id: 'student-1',
+      author_name: 'Aarav Sharma',
+      author_handle: 'aarav_cs25',
+      text: 'Professor had to cancel the lecture projection yesterday because of this HDMI cable.',
+      created_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+      votes: 6,
+    }
+  ]
+};
 
 export function sanitizePost(raw: any): Post {
   if (!raw || typeof raw !== 'object') {
@@ -104,6 +149,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [posts, setPosts] = useState<Post[]>(() => INITIAL_POSTS.map(sanitizePost));
   const [statusEvents, setStatusEvents] = useState<Record<string, StatusEvent[]>>(MOCK_STATUS_EVENTS);
+  const [comments, setComments] = useState<Record<string, PostComment[]>>(INITIAL_COMMENTS);
   const [escalatedPost, setEscalatedPost] = useState<Post | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -111,6 +157,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
     try {
       const savedPosts = localStorage.getItem(STORAGE_KEY_POSTS);
       const savedEvents = localStorage.getItem(STORAGE_KEY_EVENTS);
+      const savedComments = localStorage.getItem(STORAGE_KEY_COMMENTS);
       const savedRole = localStorage.getItem(STORAGE_KEY_ROLE) as UserRole | null;
       const savedAdmin = localStorage.getItem(STORAGE_KEY_ADMIN);
       const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) as 'light' | 'dark' | null;
@@ -124,6 +171,11 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
         }
       }
       if (savedEvents) setStatusEvents(JSON.parse(savedEvents));
+      if (savedComments) {
+        try {
+          setComments(JSON.parse(savedComments));
+        } catch {}
+      }
       if (savedRole && ['student', 'supervisor', 'admin'].includes(savedRole)) {
         setCurrentRole(savedRole);
       }
@@ -133,6 +185,25 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
         applyTheme(savedTheme);
       } else {
         applyTheme('light');
+      }
+
+      // Universal Vercel & Supabase Cloud Sync
+      if (isSupabaseConfigured()) {
+        supabase.from('posts').select('*').order('created_at', { ascending: false }).then(({ data, error }) => {
+          if (!error && Array.isArray(data) && data.length > 0) {
+            setPosts(data.map(sanitizePost));
+          }
+        });
+        supabase.from('comments').select('*').order('created_at', { ascending: true }).then(({ data, error }) => {
+          if (!error && Array.isArray(data) && data.length > 0) {
+            const grouped: Record<string, PostComment[]> = {};
+            data.forEach((c: any) => {
+              if (!grouped[c.post_id]) grouped[c.post_id] = [];
+              grouped[c.post_id].push(c);
+            });
+            setComments((prev) => ({ ...prev, ...grouped }));
+          }
+        });
       }
     } catch {
       setPosts(INITIAL_POSTS.map(sanitizePost));
@@ -179,10 +250,11 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY_POSTS, JSON.stringify(posts));
       localStorage.setItem(STORAGE_KEY_EVENTS, JSON.stringify(statusEvents));
+      localStorage.setItem(STORAGE_KEY_COMMENTS, JSON.stringify(comments));
       localStorage.setItem(STORAGE_KEY_ROLE, currentRole);
       localStorage.setItem(STORAGE_KEY_ADMIN, String(isAdmin));
     } catch {}
-  }, [posts, statusEvents, currentRole, isAdmin, isLoaded]);
+  }, [posts, statusEvents, comments, currentRole, isAdmin, isLoaded]);
 
   const currentUser = currentRole === 'admin' || isAdmin
     ? MOCK_PROFILES['admin-1']
@@ -363,7 +435,86 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
 
     const newPost = sanitizePost(rawPost);
     setPosts((prev) => [newPost, ...prev]);
+
+    // Universal Cloud Database Sync
+    if (isSupabaseConfigured()) {
+      supabase.from('posts').insert({
+        id: newPost.id,
+        author_id: newPost.author_id,
+        kind: newPost.kind,
+        title: newPost.title,
+        description: newPost.description,
+        category: newPost.category,
+        severity: newPost.severity,
+        safety_risk: newPost.safety_risk,
+        department: newPost.department,
+        location_name: newPost.location_name,
+        photos: newPost.photos,
+        anonymous: newPost.anonymous,
+        status: newPost.status,
+        agree_count: 1,
+        disagree_count: 0,
+        created_at: newPost.created_at,
+      }).then(({ error }) => {
+        if (error) console.warn('[Supabase Sync] insert post warning:', error.message);
+      });
+    }
+
     return newPost;
+  };
+
+  const deletePost = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => String(p.id) !== String(postId)));
+    setComments((prev) => {
+      const next = { ...prev };
+      delete next[postId];
+      return next;
+    });
+
+    if (isSupabaseConfigured()) {
+      supabase.from('posts').delete().eq('id', postId).then(({ error }) => {
+        if (error) console.warn('[Supabase Sync] delete post warning:', error.message);
+      });
+    }
+  };
+
+  const addComment = (postId: string, text: string): PostComment => {
+    const newComment: PostComment = {
+      id: `c-${Date.now()}`,
+      post_id: postId,
+      author_id: currentUser.id,
+      author_name: currentUser.display_name,
+      author_handle: currentUser.display_name.toLowerCase().replace(/\s+/g, '_'),
+      text: text.trim(),
+      created_at: new Date().toISOString(),
+      votes: 1,
+    };
+
+    setComments((prev) => ({
+      ...prev,
+      [postId]: [newComment, ...(prev[postId] || [])],
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('comments').insert(newComment).then(({ error }) => {
+        if (error) console.warn('[Supabase Sync] insert comment warning:', error.message);
+      });
+    }
+
+    return newComment;
+  };
+
+  const deleteComment = (postId: string, commentId: string) => {
+    setComments((prev) => ({
+      ...prev,
+      [postId]: (prev[postId] || []).filter((c) => c.id !== commentId),
+    }));
+
+    if (isSupabaseConfigured()) {
+      supabase.from('comments').delete().eq('id', commentId).then(({ error }) => {
+        if (error) console.warn('[Supabase Sync] delete comment warning:', error.message);
+      });
+    }
   };
 
   const searchSimilar = (query: string, locationId?: number) => {
@@ -381,13 +532,15 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetDemoData = () => {
-    setPosts(INITIAL_POSTS);
+    setPosts(INITIAL_POSTS.map(sanitizePost));
     setStatusEvents(MOCK_STATUS_EVENTS);
+    setComments(INITIAL_COMMENTS);
     setCurrentRole('student');
     setIsAdmin(false);
     try {
       localStorage.removeItem(STORAGE_KEY_POSTS);
       localStorage.removeItem(STORAGE_KEY_EVENTS);
+      localStorage.removeItem(STORAGE_KEY_COMMENTS);
       localStorage.removeItem(STORAGE_KEY_ROLE);
       localStorage.removeItem(STORAGE_KEY_ADMIN);
     } catch {}
@@ -405,6 +558,7 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
         toggleTheme,
         posts,
         statusEvents,
+        comments,
         escalatedPost,
         closeEscalationModal,
         vote,
@@ -415,6 +569,9 @@ export function UpCampusProvider({ children }: { children: React.ReactNode }) {
         resolvePostWithAdminNote,
         verifyPost,
         addPost,
+        deletePost,
+        addComment,
+        deleteComment,
         resetDemoData,
         searchSimilar,
       }}
